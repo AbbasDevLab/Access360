@@ -8,6 +8,7 @@ import HomeRoute from './routes/HomeRoute'
 import EnrollRoute from './routes/EnrollRoute'
 const VerifyRoute = React.lazy(() => import('./routes/VerifyRoute'))
 import PassesRoute from './routes/PassesRoute'
+import DepartmentsRoute from './routes/DepartmentsRoute'
 import { setupI18n } from './i18n'
 
 // Ensure i18n is initialized before any components render
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: 'enroll', element: <EnrollRoute /> },
       { path: 'verify', element: (<React.Suspense fallback={null}><VerifyRoute /></React.Suspense>) },
       { path: 'passes', element: <PassesRoute /> },
+      { path: 'departments', element: <DepartmentsRoute /> },
       { path: '*', element: <HomeRoute /> },
     ],
   },

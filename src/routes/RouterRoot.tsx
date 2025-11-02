@@ -27,6 +27,7 @@ export default function RouterRoot(): JSX.Element {
             <NavLink to="/enroll" className={({ isActive }) => `px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white text-blue-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-800'}`}>{t('enroll')}</NavLink>
             <NavLink to="/verify" className={({ isActive }) => `px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white text-blue-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-800'}`}>{t('verify')}</NavLink>
             <NavLink to="/passes" className={({ isActive }) => `px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white text-blue-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-800'}`}>Reports</NavLink>
+            <NavLink to="/departments" className={({ isActive }) => `px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-white text-blue-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-800'}`}>Departments</NavLink>
           </nav>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 text-sm text-neutral-500">

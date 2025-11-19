@@ -9,6 +9,9 @@ export interface OCRResult {
   confidence?: number
 }
 
+// OpenAI API Key - TODO: Move to environment variable for security
+const OPENAI_API_KEY = "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"
+
 /**
  * Preprocess image for better OCR accuracy
  * Enhances contrast, converts to grayscale, uses adaptive thresholding
@@ -123,7 +126,7 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
     // Set OCR parameters for maximum accuracy
     await worker.setParameters({
       tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
-      tessedit_pageseg_mode: '6', // Assume a single uniform block of text
+      tessedit_pageseg_mode: 6 as any, // Assume a single uniform block of text
       preserve_interword_spaces: '1',
       tessedit_ocr_engine_mode: '2', // Use LSTM OCR engine for better accuracy
     })
@@ -150,7 +153,7 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
 
       await worker2.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
-        tessedit_pageseg_mode: '11', // Sparse text (find as much text as possible in no particular order)
+        tessedit_pageseg_mode: 11 as any, // Sparse text (find as much text as possible in no particular order)
         preserve_interword_spaces: '1',
         tessedit_ocr_engine_mode: '2',
       })
@@ -166,8 +169,18 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
       }
     }
 
-    // Parse the extracted text to find CNIC and name patterns
-    const parsed = parseOCRText(finalText)
+    // Send raw OCR text to OpenAI for intelligent extraction
+    console.log('Sending raw OCR text to OpenAI for extraction...')
+    let parsed: Partial<OCRResult> = {}
+    
+    try {
+      parsed = await extractWithOpenAI(finalText)
+      console.log('OpenAI extraction successful:', parsed)
+    } catch (openAIError) {
+      console.warn('OpenAI extraction failed, falling back to local parsing:', openAIError)
+      // Fallback to local parsing if OpenAI fails
+      parsed = parseOCRText(finalText)
+    }
 
     return {
       ...parsed,
@@ -181,7 +194,101 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
 }
 
 /**
- * Parse OCR text to extract structured data
+ * Extract structured data from OCR text using OpenAI API
+ * Sends raw text to ChatGPT for intelligent parsing
+ */
+const extractWithOpenAI = async (rawText: string): Promise<Partial<OCRResult>> => {
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Using gpt-4o-mini for faster and cheaper responses
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert at extracting information from Pakistani National Identity Card (CNIC) OCR text. 
+Extract the following information from the raw OCR text:
+1. First Name (Full Name) - The person's complete name
+2. Father Name - The father's name (often appears after S/O, D/O, or "Father" label)
+3. CNIC Number - Pakistani CNIC in format XXXXX-XXXXXXX-X (13 digits total)
+
+Return ONLY a valid JSON object with these exact keys: fullName, fatherName, cnicNumber
+If any field is not found, set it to null.
+Format CNIC number as XXXXX-XXXXXXX-X (with dashes).
+Format names in Title Case (e.g., "Muhammad Ali Khan" not "MUHAMMAD ALI KHAN").`
+          },
+          {
+            role: 'user',
+            content: `Extract the First Name, Father Name, and CNIC Number from this OCR text:\n\n${rawText}`
+          }
+        ],
+        temperature: 0.1, // Low temperature for consistent extraction
+        response_format: { type: 'json_object' }
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(`OpenAI API error: ${response.status} - ${JSON.stringify(errorData)}`)
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+    
+    if (!content) {
+      throw new Error('No content in OpenAI response')
+    }
+
+    // Parse JSON response
+    const extracted = JSON.parse(content)
+    
+    // Validate and format the extracted data
+    const result: Partial<OCRResult> = {}
+    
+    // Handle fullName (First Name)
+    if (extracted.fullName !== null && extracted.fullName !== undefined && typeof extracted.fullName === 'string' && extracted.fullName.trim()) {
+      result.fullName = extracted.fullName.trim()
+    }
+    
+    // Handle fatherName
+    if (extracted.fatherName !== null && extracted.fatherName !== undefined && typeof extracted.fatherName === 'string' && extracted.fatherName.trim()) {
+      result.fatherName = extracted.fatherName.trim()
+    }
+    
+    // Handle cnicNumber
+    if (extracted.cnicNumber !== null && extracted.cnicNumber !== undefined && typeof extracted.cnicNumber === 'string' && extracted.cnicNumber.trim()) {
+      // Normalize CNIC format
+      let cnic = extracted.cnicNumber.trim().replace(/\s+/g, '')
+      // Ensure proper format: XXXXX-XXXXXXX-X
+      if (/^\d{13}$/.test(cnic)) {
+        cnic = `${cnic.substring(0, 5)}-${cnic.substring(5, 12)}-${cnic.substring(12, 13)}`
+        result.cnicNumber = cnic
+      } else if (/^\d{5}-\d{7}-\d{1}$/.test(cnic)) {
+        // Already in correct format
+        result.cnicNumber = cnic
+      } else {
+        // Try to fix format
+        const digits = cnic.replace(/\D/g, '')
+        if (digits.length === 13) {
+          result.cnicNumber = `${digits.substring(0, 5)}-${digits.substring(5, 12)}-${digits.substring(12, 13)}`
+        }
+      }
+    }
+
+    console.log('OpenAI extracted data:', result)
+    return result
+  } catch (error) {
+    console.error('OpenAI extraction error:', error)
+    throw error
+  }
+}
+
+/**
+ * Parse OCR text to extract structured data (Fallback method)
  * Looks for CNIC patterns and name patterns (optimized for Pakistani ID cards)
  */
 const parseOCRText = (text: string): Partial<OCRResult> => {

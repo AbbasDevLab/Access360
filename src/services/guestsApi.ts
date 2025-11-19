@@ -163,7 +163,7 @@ export const getGuestByCNIC = async (cnic: string): Promise<Guest> => {
 export const createGuest = async (guest: Partial<Guest>): Promise<any> => {
   try {
     const dto: CreateGuestDto = {
-      Idpk: guest.idpk || 1,
+      Idpk: guest.idpk && guest.idpk > 0 && guest.idpk <= 2147483647 ? guest.idpk : 0,
       FullName: guest.fullName || '',
       FatherName: guest.fatherName || '',
       Gender: guest.gender || null,

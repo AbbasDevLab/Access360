@@ -4,6 +4,7 @@ import { createGuest, getGuestByCNIC } from '../services/guestsApi'
 import { createGuestVisit } from '../services/guestVisitApi'
 import { getAllVisitorTypes } from '../services/visitorTypesApi'
 import { getAllCategories } from '../services/departmentApi'
+import { extractTextFromImage } from '../services/ocrService'
 import type { Guest, ApiError } from '../services/guestsApi'
 import type { VisitorType } from '../services/visitorTypesApi'
 import type { DepartmentCategory } from '../services/departmentApi'
@@ -23,6 +24,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
     fatherName: '',
     cnicNumber: '',
     phoneNumber: '',
+    address: '',
     visitorTypeId: '',
     destinationId: '',
     cardNumber: '',
@@ -36,6 +38,9 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [existingGuest, setExistingGuest] = useState<Guest | null>(null)
+  const [showOcrResults, setShowOcrResults] = useState(false)
+  const [ocrRawText, setOcrRawText] = useState('')
+  const [ocrConfidence, setOcrConfidence] = useState<number | undefined>()
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,30 +58,74 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
     loadData()
   }, [])
 
-  const handleFileUpload = async (_file: File) => {
+  const handleFileUpload = async (file: File) => {
     setOcrProcessing(true)
-    // Simulate OCR processing - in production, call your OCR API
-    setTimeout(() => {
-      // Mock OCR results
-      const mockOcrData = {
-        fullName: 'Ali Raza',
-        fatherName: 'Muhammad Raza',
-        cnicNumber: '35202-1234567-1',
-        dob: '1990-01-15',
-      }
+    setErrorMessage('')
+    setCapturedImage('') // Clear any previous captured image
+    
+    try {
+      // Convert file to base64
+      const reader = new FileReader()
+      const imageData = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      // Process OCR
+      const ocrResult = await extractTextFromImage(imageData)
       
+      // Log OCR results for debugging
+      console.log('OCR Results:', {
+        fullName: ocrResult.fullName,
+        fatherName: ocrResult.fatherName,
+        cnicNumber: ocrResult.cnicNumber,
+        confidence: ocrResult.confidence,
+        rawText: ocrResult.rawText.substring(0, 200) + '...', // First 200 chars
+      })
+      
+      // Store raw text and confidence for manual verification
+      setOcrRawText(ocrResult.rawText)
+      setOcrConfidence(ocrResult.confidence)
+      
+      // Update form with OCR results
       setFormData(prev => ({
         ...prev,
-        fullName: mockOcrData.fullName,
-        fatherName: mockOcrData.fatherName,
-        cnicNumber: mockOcrData.cnicNumber,
+        fullName: ocrResult.fullName || prev.fullName,
+        fatherName: ocrResult.fatherName || prev.fatherName,
+        cnicNumber: ocrResult.cnicNumber || prev.cnicNumber,
       }))
       
-      // Check if guest already exists
-      checkExistingGuest(mockOcrData.cnicNumber)
+      // Check if guest already exists (if CNIC was extracted)
+      if (ocrResult.cnicNumber) {
+        await checkExistingGuest(ocrResult.cnicNumber)
+      }
+      
+      // Show warning if extraction was partial or confidence is low
+      if (!ocrResult.fullName || !ocrResult.cnicNumber) {
+        setErrorMessage(
+          `Partial extraction: ${!ocrResult.fullName ? 'Name not found. ' : ''}${!ocrResult.cnicNumber ? 'CNIC not found. ' : ''}Please verify and correct manually.`
+        )
+        setShowOcrResults(true) // Show raw text for manual verification
+      } else if (ocrResult.confidence && ocrResult.confidence < 70) {
+        setErrorMessage(
+          `Low OCR confidence (${Math.round(ocrResult.confidence)}%). Please verify extracted information carefully.`
+        )
+        setShowOcrResults(true) // Show raw text for verification
+      } else {
+        setErrorMessage('') // Clear any previous errors
+        setShowOcrResults(false)
+      }
+      
       setOcrProcessing(false)
       setStep('form')
-    }, 2000)
+    } catch (error) {
+      console.error('OCR processing error:', error)
+      setOcrProcessing(false)
+      setErrorMessage('Failed to process ID card. Please enter details manually.')
+      // Still proceed to form even if OCR fails
+      setStep('form')
+    }
   }
 
   const checkExistingGuest = async (cnic: string) => {
@@ -88,6 +137,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
         fullName: guest.fullName,
         fatherName: guest.fatherName,
         phoneNumber: guest.phoneNumber,
+        address: guest.address || '',
       }))
     } catch (error) {
       // Guest doesn't exist, will create new one
@@ -119,14 +169,13 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
       } else {
         // Create new guest
         const newGuest = await createGuest({
-          idpk: Date.now(), // Simple ID generation - adjust as needed
           fullName: formData.fullName,
           fatherName: formData.fatherName,
           cnicNumber: formData.cnicNumber,
           phoneNumber: formData.phoneNumber,
           guestCode: `GUEST-${Date.now()}`,
           guestStatus: true,
-          address: '',
+          address: formData.address || 'Not provided',
           guestCreatedBy: 'Guard',
         })
         guestId = newGuest.id || (newGuest as any).idpk
@@ -135,7 +184,6 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
 
       // Create guest visit
       await createGuestVisit({
-        idpk: Date.now(),
         guestID: guestId,
         guestCode: guestCode,
         visitorTypeId: formData.visitorTypeId ? parseInt(formData.visitorTypeId) : null,
@@ -177,6 +225,12 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">
+            {errorMessage && (
+              <div className="mb-4 flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <XCircleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                <span className="text-sm text-yellow-700">{errorMessage}</span>
+              </div>
+            )}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-3">
@@ -188,7 +242,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                   accept="image/*,application/pdf"
                   onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                   disabled={ocrProcessing}
-                  className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                 />
                 {ocrProcessing && (
                   <div className="mt-4 text-center">
@@ -196,7 +250,8 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p className="mt-2 text-sm text-neutral-600">Processing ID card...</p>
+                    <p className="mt-2 text-sm text-neutral-600">Extracting information from ID card...</p>
+                    <p className="mt-1 text-xs text-neutral-500">This may take a few seconds</p>
                   </div>
                 )}
               </div>
@@ -207,17 +262,67 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                   Or Capture Photo
                 </label>
                 <CameraCapture
-                  onCapture={(image) => {
+                  onCapture={async (image) => {
                     setCapturedImage(image)
-                    // Auto-process captured image
+                    setErrorMessage('') // Clear any previous errors
+                    // Auto-process captured image with OCR
                     if (image) {
-                      // Convert base64 to file and process
-                      fetch(image)
-                        .then(res => res.blob())
-                        .then(blob => {
-                          const file = new File([blob], 'captured-id.jpg', { type: 'image/jpeg' })
-                          handleFileUpload(file)
+                      try {
+                        setOcrProcessing(true)
+                        // Process OCR directly from base64 image
+                        const ocrResult = await extractTextFromImage(image)
+                        
+                        // Log OCR results for debugging
+                        console.log('OCR Results:', {
+                          fullName: ocrResult.fullName,
+                          fatherName: ocrResult.fatherName,
+                          cnicNumber: ocrResult.cnicNumber,
+                          confidence: ocrResult.confidence,
+                          rawText: ocrResult.rawText.substring(0, 200) + '...', // First 200 chars
                         })
+                        
+                        // Store raw text and confidence for manual verification
+                        setOcrRawText(ocrResult.rawText)
+                        setOcrConfidence(ocrResult.confidence)
+                        
+                        // Update form with OCR results
+                        setFormData(prev => ({
+                          ...prev,
+                          fullName: ocrResult.fullName || prev.fullName,
+                          fatherName: ocrResult.fatherName || prev.fatherName,
+                          cnicNumber: ocrResult.cnicNumber || prev.cnicNumber,
+                        }))
+                        
+                        // Check if guest already exists (if CNIC was extracted)
+                        if (ocrResult.cnicNumber) {
+                          await checkExistingGuest(ocrResult.cnicNumber)
+                        }
+                        
+                        // Show warning if extraction was partial or confidence is low
+                        if (!ocrResult.fullName || !ocrResult.cnicNumber) {
+                          setErrorMessage(
+                            `Partial extraction: ${!ocrResult.fullName ? 'Name not found. ' : ''}${!ocrResult.cnicNumber ? 'CNIC not found. ' : ''}Please verify and correct manually.`
+                          )
+                          setShowOcrResults(true) // Show raw text for manual verification
+                        } else if (ocrResult.confidence && ocrResult.confidence < 70) {
+                          setErrorMessage(
+                            `Low OCR confidence (${Math.round(ocrResult.confidence)}%). Please verify extracted information carefully.`
+                          )
+                          setShowOcrResults(true) // Show raw text for verification
+                        } else {
+                          setErrorMessage('') // Clear any previous errors
+                          setShowOcrResults(false)
+                        }
+                        
+                        setOcrProcessing(false)
+                        setStep('form')
+                      } catch (error) {
+                        console.error('OCR processing error:', error)
+                        setOcrProcessing(false)
+                        setErrorMessage('Failed to process ID card. Please enter details manually.')
+                        // Still proceed to form even if OCR fails
+                        setStep('form')
+                      }
                     }
                   }}
                   capturedImage={capturedImage}
@@ -250,6 +355,35 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+          {/* OCR Confidence and Raw Text Display */}
+          {showOcrResults && ocrRawText && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-blue-900">OCR Verification</h3>
+                {ocrConfidence && (
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${
+                    ocrConfidence >= 80 ? 'bg-green-100 text-green-700' :
+                    ocrConfidence >= 70 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    Confidence: {Math.round(ocrConfidence)}%
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-blue-700 mb-2">Raw OCR text (for manual verification):</p>
+              <div className="bg-white border border-blue-200 rounded p-3 text-xs text-neutral-700 font-mono max-h-32 overflow-y-auto">
+                {ocrRawText}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOcrResults(false)}
+                className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+              >
+                Hide
+              </button>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -304,6 +438,19 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                 placeholder="0300-1234567"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Address
+            </label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => handleInputChange('address', e.target.value)}
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+              placeholder="Enter address (optional)"
+            />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">

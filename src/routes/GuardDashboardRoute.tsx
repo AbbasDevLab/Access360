@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRightIcon, ArrowLeftIcon, UserIcon, LogoutIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, ArrowLeftIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 import GuardCheckIn from '../components/GuardCheckIn'
 import GuardCheckOut from '../components/GuardCheckOut'
 import { getActiveGuestVisits } from '../services/guestVisitApi'
@@ -79,7 +79,7 @@ export default function GuardDashboardRoute(): JSX.Element {
               onClick={handleLogout}
               className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
             >
-              <LogoutIcon className="w-5 h-5" />
+              <ArrowRightOnRectangleIcon className="w-5 h-5" />
               Logout
             </button>
           </div>

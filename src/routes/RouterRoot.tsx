@@ -5,9 +5,13 @@ import { useTranslation } from 'react-i18next'
 import i18next, { setupI18n } from '../i18n'
 
 export default function RouterRoot(): JSX.Element {
+  // Ensure i18n is initialized
   React.useEffect(() => {
-    if (!i18next.isInitialized) setupI18n('en')
+    if (!i18next.isInitialized) {
+      setupI18n('en')
+    }
   }, [])
+  
   const { t } = useTranslation()
   return (
     <div className="min-h-dvh flex flex-col bg-gradient-to-br from-neutral-50 to-neutral-100 text-neutral-900">

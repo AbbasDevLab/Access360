@@ -17,6 +17,7 @@ import AdminRoute from './routes/AdminRoute'
 import GuardLoginRoute from './routes/GuardLoginRoute'
 import GuardDashboardRoute from './routes/GuardDashboardRoute'
 import { setupI18n } from './i18n'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Ensure i18n is initialized before any components render
 setupI18n('en')
@@ -44,10 +45,28 @@ const router = createBrowserRouter([
   { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
 ])
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>
-)
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  throw new Error('Root element not found')
+}
+
+try {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </React.StrictMode>
+  )
+} catch (error) {
+  console.error('Failed to render app:', error)
+  rootElement.innerHTML = `
+    <div style="padding: 20px; font-family: sans-serif;">
+      <h1>Error Loading Application</h1>
+      <p>${error instanceof Error ? error.message : 'Unknown error'}</p>
+      <p>Please check the browser console for more details.</p>
+    </div>
+  `
+}
 
 

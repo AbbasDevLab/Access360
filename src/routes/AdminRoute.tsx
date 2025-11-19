@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ShieldCheckIcon, PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
@@ -6,7 +6,7 @@ import CompanyForm from '../components/CompanyForm'
 import CompanyList from '../components/CompanyList'
 import type { AdminUser, Company } from '../services/adminApi'
 
-export default function AdminRoute(): JSX.Element {
+export default function AdminRoute() {
   const [activeTab, setActiveTab] = useState<'users' | 'companies'>('users')
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)

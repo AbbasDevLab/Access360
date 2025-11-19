@@ -1,46 +1,28 @@
-import { createApiUrl, DEPARTMENT_ENDPOINTS } from '../data/global'
+import { createApiUrl, VISITOR_TYPE_ENDPOINTS } from '../data/global'
 
-// ==================== Department Category Types ====================
+// ==================== Visitor Type Types ====================
 
-export interface DepartmentCategory {
+export interface VisitorType {
   idpk: number
-  categoryName: string
-  categoryStatus: boolean | null
-  categoryCreatedBy?: string | null
-  categoryCreatedAt?: string | null
-  categoryUpdatedBy?: string | null
-  categoryUpdatedAt?: string | null
+  vTypeName: string
+  vTypeStatus?: boolean | null
+  vTypeCreatedBy?: string | null
+  vTypeCreatedAt?: string | null
+  vTypeUpdatedBy?: string | null
+  vTypeUpdatedAt?: string | null
 }
 
-export interface CreateDeptCategoryDto {
-  Idpk: number // Backend expects uppercase I
-  CategoryName: string
-  CategoryStatus?: boolean | null
-  CategoryCreatedBy?: string | null
+export interface CreateVisitorTypeDto {
+  Idpk: number
+  VTypeName: string
+  VTypeStatus?: boolean | null
+  VTypeCreatedBy?: string | null
 }
 
-export interface UpdateDeptCategoryDto {
-  CategoryName: string
-  CategoryStatus?: boolean | null
-  CategoryUpdatedBy?: string | null
-}
-
-export interface CreateCategoryResponse {
-  id: number
-  categoryName: string
-  categoryStatus: boolean
-  message: string
-}
-
-export interface UpdateCategoryResponse {
-  id: number
-  categoryName: string
-  categoryStatus: boolean
-  message: string
-}
-
-export interface DeleteCategoryResponse {
-  message: string
+export interface UpdateVisitorTypeDto {
+  VTypeName: string
+  VTypeStatus?: boolean | null
+  VTypeUpdatedBy?: string | null
 }
 
 export interface ApiError {
@@ -49,16 +31,13 @@ export interface ApiError {
   errors?: Record<string, string[]>
 }
 
-// ==================== Department Category API ====================
+// ==================== Visitor Type API ====================
 
-// Get all department categories
-export const getAllCategories = async (): Promise<DepartmentCategory[]> => {
+export const getAllVisitorTypes = async (): Promise<VisitorType[]> => {
   try {
-    const response = await fetch(createApiUrl(DEPARTMENT_ENDPOINTS.GET_CATEGORIES), {
+    const response = await fetch(createApiUrl(VISITOR_TYPE_ENDPOINTS.GET_ALL), {
       method: 'GET',
-      headers: {
-        'accept': '*/*',
-      },
+      headers: { 'accept': '*/*' },
     })
 
     if (!response.ok) {
@@ -70,28 +49,21 @@ export const getAllCategories = async (): Promise<DepartmentCategory[]> => {
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw {
-      message: 'Network error: Failed to fetch categories',
-      status: 0,
-    } as ApiError
+    throw { message: 'Network error: Failed to fetch visitor types', status: 0 } as ApiError
   }
 }
 
-// Get department category by ID
-export const getCategoryById = async (id: number): Promise<DepartmentCategory> => {
+export const getVisitorTypeById = async (id: number): Promise<VisitorType> => {
   try {
-    const url = createApiUrl(DEPARTMENT_ENDPOINTS.GET_CATEGORY_BY_ID.replace('{id}', id.toString()))
+    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.GET_BY_ID.replace('{id}', id.toString()))
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'accept': '*/*',
-      },
+      headers: { 'accept': '*/*' },
     })
 
     if (!response.ok) {
@@ -103,33 +75,25 @@ export const getCategoryById = async (id: number): Promise<DepartmentCategory> =
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw {
-      message: 'Network error: Failed to fetch category',
-      status: 0,
-    } as ApiError
+    throw { message: 'Network error: Failed to fetch visitor type', status: 0 } as ApiError
   }
 }
 
-// Create a new department category
-export const createDepartmentCategory = async (
-  category: Partial<DepartmentCategory>
-): Promise<CreateCategoryResponse> => {
+export const createVisitorType = async (visitorType: Partial<VisitorType>): Promise<any> => {
   try {
-    // Convert to backend DTO format (uppercase property names)
-    const dto: CreateDeptCategoryDto = {
-      Idpk: category.idpk || 1,
-      CategoryName: category.categoryName || '',
-      CategoryStatus: category.categoryStatus ?? true,
-      CategoryCreatedBy: category.categoryCreatedBy || 'System',
+    const dto: CreateVisitorTypeDto = {
+      Idpk: visitorType.idpk || 1,
+      VTypeName: visitorType.vTypeName || '',
+      VTypeStatus: visitorType.vTypeStatus ?? true,
+      VTypeCreatedBy: visitorType.vTypeCreatedBy || 'System',
     }
 
-    const response = await fetch(createApiUrl(DEPARTMENT_ENDPOINTS.CREATE_CATEGORY), {
+    const response = await fetch(createApiUrl(VISITOR_TYPE_ENDPOINTS.CREATE), {
       method: 'POST',
       headers: {
         'accept': '*/*',
@@ -140,8 +104,6 @@ export const createDepartmentCategory = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      
-      // Handle validation errors from ModelState
       if (response.status === 400 && errorData.errors) {
         const validationErrors = Object.entries(errorData.errors)
           .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
@@ -152,7 +114,6 @@ export const createDepartmentCategory = async (
           errors: errorData.errors,
         } as ApiError
       }
-      
       throw {
         message: errorData.message || `HTTP error! status: ${response.status}`,
         status: response.status,
@@ -160,38 +121,29 @@ export const createDepartmentCategory = async (
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw {
-      message: 'Network error: Failed to create category',
-      status: 0,
-    } as ApiError
+    throw { message: 'Network error: Failed to create visitor type', status: 0 } as ApiError
   }
 }
 
-// Update department category
-export const updateDepartmentCategory = async (
-  id: number,
-  category: UpdateDeptCategoryDto
-): Promise<UpdateCategoryResponse> => {
+export const updateVisitorType = async (id: number, visitorType: UpdateVisitorTypeDto): Promise<any> => {
   try {
-    const url = createApiUrl(DEPARTMENT_ENDPOINTS.UPDATE_CATEGORY.replace('{id}', id.toString()))
+    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.UPDATE.replace('{id}', id.toString()))
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(category),
+      body: JSON.stringify(visitorType),
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      
       if (response.status === 400 && errorData.errors) {
         const validationErrors = Object.entries(errorData.errors)
           .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
@@ -202,7 +154,6 @@ export const updateDepartmentCategory = async (
           errors: errorData.errors,
         } as ApiError
       }
-      
       throw {
         message: errorData.message || `HTTP error! status: ${response.status}`,
         status: response.status,
@@ -210,28 +161,21 @@ export const updateDepartmentCategory = async (
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw {
-      message: 'Network error: Failed to update category',
-      status: 0,
-    } as ApiError
+    throw { message: 'Network error: Failed to update visitor type', status: 0 } as ApiError
   }
 }
 
-// Delete department category
-export const deleteDepartmentCategory = async (id: number): Promise<DeleteCategoryResponse> => {
+export const deleteVisitorType = async (id: number): Promise<any> => {
   try {
-    const url = createApiUrl(DEPARTMENT_ENDPOINTS.DELETE_CATEGORY.replace('{id}', id.toString()))
+    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.DELETE.replace('{id}', id.toString()))
     const response = await fetch(url, {
       method: 'DELETE',
-      headers: {
-        'accept': '*/*',
-      },
+      headers: { 'accept': '*/*' },
     })
 
     if (!response.ok) {
@@ -243,15 +187,12 @@ export const deleteDepartmentCategory = async (id: number): Promise<DeleteCatego
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw {
-      message: 'Network error: Failed to delete category',
-      status: 0,
-    } as ApiError
+    throw { message: 'Network error: Failed to delete visitor type', status: 0 } as ApiError
   }
 }
+

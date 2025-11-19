@@ -1,22 +1,33 @@
 import React, { useState } from 'react'
 import { BuildingOfficeIcon, PlusIcon, ListBulletIcon } from '@heroicons/react/24/outline'
 import DepartmentCategoryForm from '../components/DepartmentCategoryForm'
+import DepartmentCategoryList from '../components/DepartmentCategoryList'
 import type { DepartmentCategory } from '../services/departmentApi'
 
 export default function DepartmentsRoute(): JSX.Element {
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const handleCategoryCreated = (category: DepartmentCategory) => {
     console.log('Category created:', category)
-    // TODO: Refresh list if showing
-    if (activeView === 'create') {
-      // Optionally switch to list view
-      // setActiveView('list')
+    // Refresh list if showing, or switch to list view after 2 seconds
+    if (activeView === 'list') {
+      setRefreshKey(prev => prev + 1) // Trigger refresh
+    } else {
+      // Switch to list view after creation
+      setTimeout(() => {
+        setActiveView('list')
+        setRefreshKey(prev => prev + 1) // Trigger refresh when switching
+      }, 2000)
     }
   }
 
   const handleCategoryError = (error: string) => {
     console.error('Error creating category:', error)
+  }
+
+  const handleRefreshNeeded = () => {
+    setRefreshKey(prev => prev + 1)
   }
 
   return (
@@ -86,11 +97,10 @@ export default function DepartmentsRoute(): JSX.Element {
               View and manage all department categories.
             </p>
           </div>
-          <div className="text-center py-12 text-neutral-500">
-            <ListBulletIcon className="w-12 h-12 mx-auto mb-4 text-neutral-400" />
-            <p>Categories list will be displayed here</p>
-            <p className="text-sm mt-2">API endpoint: GET /Departments/GetAllCategories</p>
-          </div>
+          <DepartmentCategoryList
+            key={refreshKey}
+            onRefresh={handleRefreshNeeded}
+          />
         </div>
       )}
 

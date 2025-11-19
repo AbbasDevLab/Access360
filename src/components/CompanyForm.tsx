@@ -1,22 +1,22 @@
 import React, { useState } from 'react'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
-import { createDepartmentCategory } from '../services/departmentApi'
-import type { DepartmentCategory, ApiError } from '../services/departmentApi'
+import { createCompany } from '../services/adminApi'
+import type { Company, ApiError } from '../services/adminApi'
 
-interface DepartmentCategoryFormProps {
-  onSuccess?: (category: DepartmentCategory) => void
+interface CompanyFormProps {
+  onSuccess?: (company: Company) => void
   onError?: (error: string) => void
 }
 
-export default function DepartmentCategoryForm({
+export default function CompanyForm({
   onSuccess,
   onError,
-}: DepartmentCategoryFormProps): JSX.Element {
-  const [formData, setFormData] = useState<Partial<DepartmentCategory>>({
-    categoryName: '',
-    categoryStatus: true,
-    idpk: 1,
-    categoryCreatedBy: 'System',
+}: CompanyFormProps): JSX.Element {
+  const [formData, setFormData] = useState<Partial<Company>>({
+    cmpPrefix: '',
+    cmpName: '',
+    cmpStatus: true,
+    cmpCreatedBy: 'System',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -29,20 +29,19 @@ export default function DepartmentCategoryForm({
     setErrorMessage('')
 
     try {
-      const response = await createDepartmentCategory(formData)
+      const response = await createCompany(formData)
       setSubmitStatus('success')
       
       if (onSuccess) {
         onSuccess(response as any)
       }
 
-      // Reset form after 2 seconds
       setTimeout(() => {
         setFormData({
-          categoryName: '',
-          categoryStatus: true,
-          idpk: 1,
-          categoryCreatedBy: 'System',
+          cmpPrefix: '',
+          cmpName: '',
+          cmpStatus: true,
+          cmpCreatedBy: 'System',
         })
         setSubmitStatus('idle')
       }, 2000)
@@ -50,14 +49,10 @@ export default function DepartmentCategoryForm({
       setSubmitStatus('error')
       const apiError = error as ApiError
       
-      // Format validation errors if they exist
-      let message = apiError.message || 'Failed to create category'
+      let message = apiError.message || 'Failed to create company'
       if (apiError.errors) {
         const validationMessages = Object.entries(apiError.errors)
-          .map(([key, value]: [string, any]) => {
-            const fieldName = key.replace(/([A-Z])/g, ' $1').trim()
-            return `${fieldName}: ${Array.isArray(value) ? value.join(', ') : value}`
-          })
+          .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
           .join('; ')
         message = validationMessages || message
       }
@@ -72,7 +67,7 @@ export default function DepartmentCategoryForm({
     }
   }
 
-  const handleInputChange = (field: keyof DepartmentCategory, value: string | boolean | number) => {
+  const handleInputChange = (field: keyof Company, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -81,35 +76,50 @@ export default function DepartmentCategoryForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Category Name */}
-      <div className="grid gap-2">
-        <label htmlFor="categoryName" className="text-sm font-medium text-neutral-700">
-          Category Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="categoryName"
-          type="text"
-          value={formData.categoryName}
-          onChange={(e) => handleInputChange('categoryName', e.target.value)}
-          required
-          disabled={isSubmitting}
-          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          placeholder="e.g., college department, academic department"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <label htmlFor="cmpPrefix" className="text-sm font-medium text-neutral-700">
+            Company Prefix <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="cmpPrefix"
+            type="text"
+            value={formData.cmpPrefix}
+            onChange={(e) => handleInputChange('cmpPrefix', e.target.value)}
+            required
+            maxLength={10}
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="cmpName" className="text-sm font-medium text-neutral-700">
+            Company Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="cmpName"
+            type="text"
+            value={formData.cmpName}
+            onChange={(e) => handleInputChange('cmpName', e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
       </div>
 
-      {/* Category Status */}
       <div className="grid gap-2">
-        <label htmlFor="categoryStatus" className="text-sm font-medium text-neutral-700">
+        <label htmlFor="cmpStatus" className="text-sm font-medium text-neutral-700">
           Status
         </label>
         <div className="flex items-center gap-4">
           <label className="inline-flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name="categoryStatus"
-              checked={formData.categoryStatus === true}
-              onChange={() => handleInputChange('categoryStatus', true)}
+              name="cmpStatus"
+              checked={formData.cmpStatus === true}
+              onChange={() => handleInputChange('cmpStatus', true)}
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
@@ -118,9 +128,9 @@ export default function DepartmentCategoryForm({
           <label className="inline-flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name="categoryStatus"
-              checked={formData.categoryStatus === false}
-              onChange={() => handleInputChange('categoryStatus', false)}
+              name="cmpStatus"
+              checked={formData.cmpStatus === false}
+              onChange={() => handleInputChange('cmpStatus', false)}
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
@@ -129,22 +139,6 @@ export default function DepartmentCategoryForm({
         </div>
       </div>
 
-      {/* ID PK */}
-      <div className="grid gap-2">
-        <label htmlFor="idpk" className="text-sm font-medium text-neutral-700">
-          ID PK
-        </label>
-        <input
-          id="idpk"
-          type="number"
-          value={formData.idpk || ''}
-          onChange={(e) => handleInputChange('idpk', parseInt(e.target.value) || 1)}
-          disabled={isSubmitting}
-          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-        />
-      </div>
-
-      {/* Error Message */}
       {submitStatus === 'error' && errorMessage && (
         <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
           <XCircleIcon className="w-5 h-5 text-red-600" />
@@ -152,18 +146,16 @@ export default function DepartmentCategoryForm({
         </div>
       )}
 
-      {/* Success Message */}
       {submitStatus === 'success' && (
         <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircleIcon className="w-5 h-5 text-green-600" />
-          <span className="text-sm text-green-700">Category created successfully!</span>
+          <span className="text-sm text-green-700">Company created successfully!</span>
         </div>
       )}
 
-      {/* Submit Button */}
       <button
         type="submit"
-        disabled={isSubmitting || !formData.categoryName.trim()}
+        disabled={isSubmitting || !formData.cmpPrefix?.trim() || !formData.cmpName?.trim()}
         className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
@@ -175,9 +167,10 @@ export default function DepartmentCategoryForm({
             Creating...
           </>
         ) : (
-          'Create Category'
+          'Create Company'
         )}
       </button>
     </form>
   )
 }
+

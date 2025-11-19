@@ -1,10 +1,13 @@
-import React, { useState } from 'react'
-import { visitorCategories, campusSites } from '../data/constants'
+import React, { useState, useEffect } from 'react'
 import CameraCapture from '../components/CameraCapture'
 import OCRResults from '../components/OCRResults'
 import CardAssignment from '../components/CardAssignment'
 import ReturningVisitorLookup from '../components/ReturningVisitorLookup'
 import ExitFlow from '../components/ExitFlow'
+import { getAllVisitorTypes } from '../services/visitorTypesApi'
+import { getAllCategories } from '../services/departmentApi'
+import type { VisitorType } from '../services/visitorTypesApi'
+import type { DepartmentCategory } from '../services/departmentApi'
 
 export async function loader() {
   return null
@@ -18,6 +21,9 @@ export default function EnrollRoute(): JSX.Element {
   const [selectedCardId, setSelectedCardId] = useState('')
   const [assignedCard, setAssignedCard] = useState<any>(null)
   const [returningVisitor, setReturningVisitor] = useState<any>(null)
+  const [visitorTypes, setVisitorTypes] = useState<VisitorType[]>([])
+  const [departmentCategories, setDepartmentCategories] = useState<DepartmentCategory[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
   // Mock card data
   const cards = [
@@ -69,6 +75,26 @@ export default function EnrollRoute(): JSX.Element {
     // Reset form
     setMode('lookup')
   }
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoadingData(true)
+        const [typesData, categoriesData] = await Promise.all([
+          getAllVisitorTypes(),
+          getAllCategories(),
+        ])
+        // Filter only active items
+        setVisitorTypes(typesData.filter(t => t.vTypeStatus))
+        setDepartmentCategories(categoriesData.filter(c => c.categoryStatus))
+      } catch (error) {
+        console.error('Error loading dropdown data:', error)
+      } finally {
+        setIsLoadingData(false)
+      }
+    }
+    loadData()
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -169,21 +195,29 @@ export default function EnrollRoute(): JSX.Element {
               </div>
               <div className="grid gap-1">
                 <label className="text-sm text-neutral-600">Visitor Type</label>
-                <select className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                  {visitorCategories.map((c) => (
-                    <option key={c}>{c}</option>
+                <select 
+                  className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  disabled={isLoadingData}
+                >
+                  <option value="">{isLoadingData ? 'Loading...' : 'Select Visitor Type'}</option>
+                  {visitorTypes.map((type) => (
+                    <option key={type.idpk} value={type.idpk}>
+                      {type.vTypeName}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="grid gap-1">
                 <label className="text-sm text-neutral-600">Site / Destination</label>
-                <select className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                  {campusSites.map((g) => (
-                    <optgroup key={g.group} label={g.group}>
-                      {g.sites.map((s) => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </optgroup>
+                <select 
+                  className="rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  disabled={isLoadingData}
+                >
+                  <option value="">{isLoadingData ? 'Loading...' : 'Select Destination'}</option>
+                  {departmentCategories.map((category) => (
+                    <option key={category.idpk} value={category.idpk}>
+                      {category.categoryName}
+                    </option>
                   ))}
                 </select>
               </div>

@@ -39,25 +39,39 @@ export default function GuardLoginRoute(): JSX.Element {
       )
 
       if (guard) {
-        // In production, you should hash and compare passwords properly
-        // For now, we'll check if password matches (you should implement proper password hashing)
-        // TODO: Implement proper password verification with backend API
-        if (password.trim()) {
-          // Store guard session
-          localStorage.setItem('guardUser', JSON.stringify({
-            id: guard.id,
-            username: guard.username,
-            guardFullName: guard.guardFullName,
-            guardEmail: guard.guardEmail,
-            loggedIn: true,
-            loginTime: new Date().toISOString()
-          }))
-          // Navigate immediately without waiting
-          navigate('/guard/dashboard', { replace: true })
-          return // Exit early after successful navigation
-        } else {
+        // Verify password (if guardPassword is available and not empty)
+        // Note: In production, this should be done on the backend with proper password hashing
+        // For now, we check if password is provided and matches stored password (if available)
+        if (!password.trim()) {
           setError('Please enter password')
+          return
         }
+
+        // TODO: Implement proper backend authentication API that handles password hashing
+        // For now, if guardPassword is available, compare it (assuming plaintext for development)
+        // In production, passwords should be hashed and compared on the backend
+        if (guard.guardPassword && guard.guardPassword.trim() !== '') {
+          // Compare passwords (assuming plaintext for now - should be hashed in production)
+          if (guard.guardPassword !== password.trim()) {
+            setError('Invalid username or password. Please check your credentials.')
+            return
+          }
+        }
+        // If no password stored, accept any password for development (NOT for production!)
+        // TODO: Remove this fallback once backend authentication is implemented
+
+        // Store guard session
+        localStorage.setItem('guardUser', JSON.stringify({
+          id: guard.id,
+          username: guard.username,
+          guardFullName: guard.guardFullName,
+          guardEmail: guard.guardEmail,
+          loggedIn: true,
+          loginTime: new Date().toISOString()
+        }))
+        // Navigate immediately without waiting
+        navigate('/guard/dashboard', { replace: true })
+        return // Exit early after successful navigation
       } else {
         setError('Invalid username or password. Please check your credentials.')
       }

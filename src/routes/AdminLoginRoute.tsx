@@ -41,26 +41,40 @@ export default function AdminLoginRoute(): JSX.Element {
       )
 
       if (user) {
-        // In production, you should hash and compare passwords properly
-        // For now, we'll check if password matches (you should implement proper password hashing)
-        // TODO: Implement proper password verification with backend API
-        if (password.trim()) {
-          // Store admin session
-          localStorage.setItem('adminUser', JSON.stringify({
-            id: user.id,
-            username: user.username,
-            userFullName: user.userFullName,
-            userEmail: user.userEmail,
-            loggedIn: true,
-            loginTime: new Date().toISOString()
-          }))
-          
-          // Redirect to return URL or home
-          const from = (location.state as any)?.from?.pathname || '/'
-          navigate(from, { replace: true })
-        } else {
+        // Verify password (if userPassword is available and not empty)
+        // Note: In production, this should be done on the backend with proper password hashing
+        // For now, we check if password is provided and matches stored password (if available)
+        if (!password.trim()) {
           setError('Please enter password')
+          return
         }
+
+        // TODO: Implement proper backend authentication API that handles password hashing
+        // For now, if userPassword is available, compare it (assuming plaintext for development)
+        // In production, passwords should be hashed and compared on the backend
+        if (user.userPassword && user.userPassword.trim() !== '') {
+          // Compare passwords (assuming plaintext for now - should be hashed in production)
+          if (user.userPassword !== password.trim()) {
+            setError('Invalid username or password')
+            return
+          }
+        }
+        // If no password stored, accept any password for development (NOT for production!)
+        // TODO: Remove this fallback once backend authentication is implemented
+
+        // Store admin session
+        localStorage.setItem('adminUser', JSON.stringify({
+          id: user.id,
+          username: user.username,
+          userFullName: user.userFullName,
+          userEmail: user.userEmail,
+          loggedIn: true,
+          loginTime: new Date().toISOString()
+        }))
+        
+        // Redirect to return URL or home
+        const from = (location.state as any)?.from?.pathname || '/'
+        navigate(from, { replace: true })
       } else {
         setError('Invalid username or password')
       }

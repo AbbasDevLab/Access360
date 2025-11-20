@@ -13,6 +13,11 @@ export interface OCRResult {
 // Set VITE_OPENAI_API_KEY in your .env file
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
 
+// Check if API key is configured
+if (!OPENAI_API_KEY && import.meta.env.PROD) {
+  console.warn('OpenAI API key not configured. OCR extraction may fail.')
+}
+
 /**
  * Preprocess image for better OCR accuracy
  * Enhances contrast, converts to grayscale, uses adaptive thresholding
@@ -212,6 +217,10 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
  * Sends raw text to ChatGPT for intelligent parsing
  */
 const extractWithOpenAI = async (rawText: string): Promise<Partial<OCRResult>> => {
+  if (!OPENAI_API_KEY || OPENAI_API_KEY.trim() === '') {
+    throw new Error('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your .env file.')
+  }
+
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

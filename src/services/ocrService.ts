@@ -9,8 +9,9 @@ export interface OCRResult {
   confidence?: number
 }
 
-// OpenAI API Key - TODO: Move to environment variable for security
-const OPENAI_API_KEY = "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"
+// OpenAI API Key - Load from environment variable for security
+// Set VITE_OPENAI_API_KEY in your .env file
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
 
 /**
  * Preprocess image for better OCR accuracy

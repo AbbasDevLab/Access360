@@ -173,7 +173,7 @@ export const getActiveGuestVisits = async (): Promise<GuestVisit[]> => {
 export const createGuestVisit = async (visit: Partial<GuestVisit>): Promise<any> => {
   try {
     const dto: CreateGuestVisitDto = {
-      Idpk: visit.idpk && visit.idpk > 0 && visit.idpk <= 2147483647 ? visit.idpk : 0,
+      Idpk: 0, // Auto increment - always set to 0
       GuestID: visit.guestID || 0,
       GuestCode: visit.guestCode || '',
       VisitorTypeId: visit.visitorTypeId || null,

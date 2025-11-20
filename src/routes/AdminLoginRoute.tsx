@@ -1,14 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ShieldCheckIcon, LockClosedIcon } from '@heroicons/react/24/outline'
-import { useNavigate } from 'react-router-dom'
-import { getAllGuards } from '../services/guardsApi'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { getAllAdminUsers } from '../services/adminApi'
 
-export default function GuardLoginRoute(): JSX.Element {
+export default function AdminLoginRoute(): JSX.Element {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Check if already logged in
+  useEffect(() => {
+    const stored = localStorage.getItem('adminUser')
+    if (stored) {
+      try {
+        const user = JSON.parse(stored)
+        if (user.loggedIn) {
+          // Already logged in, redirect to home or return URL
+          const from = (location.state as any)?.from?.pathname || '/'
+          navigate(from, { replace: true })
+        }
+      } catch (e) {
+        // Invalid stored data, continue to login
+      }
+    }
+  }, [navigate, location])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,60 +34,39 @@ export default function GuardLoginRoute(): JSX.Element {
     setIsLoading(true)
 
     try {
-      // Get all guards and find matching username
-      let guards
-      try {
-        guards = await getAllGuards()
-      } catch (apiError: any) {
-        // If API is not available (404), provide helpful error
-        if (apiError.status === 404 || apiError.status === 0) {
-          setError('Guard API not available. Please ensure backend is running and Guards table exists.')
-          return
-        }
-        throw apiError // Re-throw other errors
-      }
-
-      if (!guards || guards.length === 0) {
-        setError('No guards found in system. Please create guard accounts first.')
-        return
-      }
-
-      const guard = guards.find(
-        (g) => g.username.toLowerCase() === username.toLowerCase() && g.guardStatus && !g.guardIsDisabled
+      // Get all admin users and find matching username
+      const adminUsers = await getAllAdminUsers()
+      const user = adminUsers.find(
+        (u) => u.username.toLowerCase() === username.toLowerCase() && u.userStatus && !u.userIsDisabled
       )
 
-      if (guard) {
+      if (user) {
         // In production, you should hash and compare passwords properly
         // For now, we'll check if password matches (you should implement proper password hashing)
         // TODO: Implement proper password verification with backend API
         if (password.trim()) {
-          // Store guard session
-          localStorage.setItem('guardUser', JSON.stringify({
-            id: guard.id,
-            username: guard.username,
-            guardFullName: guard.guardFullName,
-            guardEmail: guard.guardEmail,
+          // Store admin session
+          localStorage.setItem('adminUser', JSON.stringify({
+            id: user.id,
+            username: user.username,
+            userFullName: user.userFullName,
+            userEmail: user.userEmail,
             loggedIn: true,
             loginTime: new Date().toISOString()
           }))
-          // Navigate immediately without waiting
-          navigate('/guard/dashboard', { replace: true })
-          return // Exit early after successful navigation
+          
+          // Redirect to return URL or home
+          const from = (location.state as any)?.from?.pathname || '/'
+          navigate(from, { replace: true })
         } else {
           setError('Please enter password')
         }
       } else {
-        setError('Invalid username or password. Please check your credentials.')
+        setError('Invalid username or password')
       }
     } catch (err) {
       console.error('Login error:', err)
-      const apiError = err as any
-      // Provide more specific error message
-      if (apiError.status === 404) {
-        setError('Guard API not available. Please ensure backend is running and Guards table exists.')
-      } else {
-        setError(apiError.message || 'Login failed. Please try again.')
-      }
+      setError('Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -82,7 +79,7 @@ export default function GuardLoginRoute(): JSX.Element {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
             <ShieldCheckIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">Guard Counter Login</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">Admin Portal Login</h1>
           <p className="text-sm text-neutral-600 mt-2">Access360 Visitor Management</p>
         </div>
 
@@ -105,6 +102,7 @@ export default function GuardLoginRoute(): JSX.Element {
                 required
                 className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your username"
+                autoComplete="username"
               />
             </div>
           </div>
@@ -125,6 +123,7 @@ export default function GuardLoginRoute(): JSX.Element {
                 required
                 className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your password"
+                autoComplete="current-password"
               />
             </div>
           </div>
@@ -155,7 +154,7 @@ export default function GuardLoginRoute(): JSX.Element {
         </form>
 
         <div className="mt-6 text-center text-sm text-neutral-500">
-          <p>For counter staff use only</p>
+          <p>For admin users only</p>
         </div>
       </div>
     </div>

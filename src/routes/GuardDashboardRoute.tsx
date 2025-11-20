@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRightIcon, ArrowLeftIcon, UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
+import { ArrowRightIcon, ArrowLeftIcon, UserIcon, ArrowRightOnRectangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import GuardCheckIn from '../components/GuardCheckIn'
 import GuardCheckOut from '../components/GuardCheckOut'
-import { getActiveGuestVisits } from '../services/guestVisitApi'
+import { getActiveGuestVisits, getAllGuestVisits, type GuestVisit } from '../services/guestVisitApi'
 
-export default function GuardDashboardRoute(): JSX.Element {
+export default function GuardDashboardRoute(): React.JSX.Element {
   const [mode, setMode] = useState<'dashboard' | 'checkin' | 'checkout'>('dashboard')
   const [activeVisits, setActiveVisits] = useState(0)
+  const [recentVisits, setRecentVisits] = useState<GuestVisit[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -25,18 +26,73 @@ export default function GuardDashboardRoute(): JSX.Element {
         setActiveVisits(visits.length)
       } catch (error) {
         console.error('Error loading active visits:', error)
+        // Set to 0 on error to prevent UI blocking
+        setActiveVisits(0)
       }
     }
-    loadActiveVisits()
 
-    // Refresh active visits every 30 seconds
-    const interval = setInterval(loadActiveVisits, 30000)
+    // Load recent visits (last 10 checked out)
+    const loadRecentVisits = async () => {
+      try {
+        const allVisits = await getAllGuestVisits()
+        // Get visits that have timeOut set, sorted by timeOut descending
+        const checkedOut = allVisits
+          .filter(v => v.timeOut)
+          .sort((a, b) => {
+            const timeA = new Date(a.timeOut || 0).getTime()
+            const timeB = new Date(b.timeOut || 0).getTime()
+            return timeB - timeA
+          })
+          .slice(0, 10)
+        setRecentVisits(checkedOut)
+      } catch (error) {
+        console.error('Error loading recent visits:', error)
+        // Set to empty array on error to prevent UI blocking
+        setRecentVisits([])
+      }
+    }
+
+    loadActiveVisits()
+    loadRecentVisits()
+
+    // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      loadActiveVisits()
+      loadRecentVisits()
+    }, 30000)
     return () => clearInterval(interval)
   }, [navigate])
+
+  const formatTime = (timeString?: string | null) => {
+    if (!timeString) return 'N/A'
+    const date = new Date(timeString)
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('guardUser')
     navigate('/guard/login')
+  }
+
+  const refreshVisits = async () => {
+    try {
+      const visits = await getActiveGuestVisits()
+      setActiveVisits(visits.length)
+      
+      // Reload recent visits
+      const allVisits = await getAllGuestVisits()
+      const checkedOut = allVisits
+        .filter(v => v.timeOut)
+        .sort((a, b) => {
+          const timeA = new Date(a.timeOut || 0).getTime()
+          const timeB = new Date(b.timeOut || 0).getTime()
+          return timeB - timeA
+        })
+        .slice(0, 10)
+      setRecentVisits(checkedOut)
+    } catch (error) {
+      console.error('Error refreshing visits:', error)
+    }
   }
 
   if (mode === 'checkin') {
@@ -45,8 +101,7 @@ export default function GuardDashboardRoute(): JSX.Element {
         onBack={() => setMode('dashboard')}
         onSuccess={() => {
           setMode('dashboard')
-          // Refresh active visits count
-          getActiveGuestVisits().then(visits => setActiveVisits(visits.length))
+          refreshVisits()
         }}
       />
     )
@@ -58,8 +113,7 @@ export default function GuardDashboardRoute(): JSX.Element {
         onBack={() => setMode('dashboard')}
         onSuccess={() => {
           setMode('dashboard')
-          // Refresh active visits count
-          getActiveGuestVisits().then(visits => setActiveVisits(visits.length))
+          refreshVisits()
         }}
       />
     )
@@ -98,6 +152,42 @@ export default function GuardDashboardRoute(): JSX.Element {
           </div>
         </div>
 
+
+        {/* Recent Visitors */}
+        {recentVisits.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
+                <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                Recent Checkouts ({recentVisits.length})
+              </h2>
+            </div>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {recentVisits.map((visit) => (
+                <div
+                  key={visit.idpk}
+                  className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-neutral-900">
+                      {visit.guest?.fullName || 'Unknown Visitor'}
+                    </div>
+                    <div className="text-xs text-neutral-600 mt-1">
+                      <span>Out: {formatTime(visit.timeOut)}</span>
+                      {visit.timeIn && (
+                        <span className="ml-3">In: {formatTime(visit.timeIn)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium">
+                    Checked Out
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Main Action Buttons */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Check In Button */}
@@ -110,7 +200,8 @@ export default function GuardDashboardRoute(): JSX.Element {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold mb-2">CHECK IN</div>
-              <div className="text-green-100 text-lg">New Visitor Entry</div>
+              <div className="text-3xl font-bold mb-2">اندراج</div>
+              <div className="text-green-100 text-lg">New Visitor Entry نئی وزیٹر انٹری</div>
             </div>
           </button>
 
@@ -123,8 +214,8 @@ export default function GuardDashboardRoute(): JSX.Element {
               <ArrowLeftIcon className="w-12 h-12 text-white" />
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold mb-2">CHECK OUT</div>
-              <div className="text-red-100 text-lg">Visitor Exit</div>
+              <div className="text-3xl font-bold mb-2">CHECK OUT  چیک آؤٹ</div>
+              <div className="text-red-100 text-lg">Visitor Exit وزیٹر کا اخراج</div>
             </div>
           </button>
         </div>

@@ -86,7 +86,7 @@ export default function GuestVisitForm({
           isAppointment: false,
           isEscortRequired: false,
           rfidCardNumber: '',
-          idpk: 1,
+          idpk: 0, // Auto-increment - not user-editable
         })
         setSubmitStatus('idle')
       }, 2000)

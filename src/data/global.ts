@@ -1,6 +1,6 @@
 // Global API configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://localhost:7215/api',
+  BASE_URL: 'https://api.access360.site/backend/api/',
 } as const
 
 // API helper function to create full URLs
@@ -77,4 +77,10 @@ export const ADMIN_ENDPOINTS = {
   CREATE_COMPANY: '/Admin/CreateCompany/Company',
   UPDATE_COMPANY: '/Admin/UpdateCompany/Company/{id}',
   DELETE_COMPANY: '/Admin/DeleteCompany/Company/{id}',
+  // Guard endpoints
+  GET_GUARDS: '/Admin/GetGuards',
+  GET_GUARD_BY_ID: '/Admin/GetGuardById/Guard/{id}',
+  CREATE_GUARD: '/Admin/CreateGuard/Guard',
+  UPDATE_GUARD: '/Admin/UpdateGuard/Guard/{id}',
+  DELETE_GUARD: '/Admin/DeleteGuard/Guard/{id}',
 } as const

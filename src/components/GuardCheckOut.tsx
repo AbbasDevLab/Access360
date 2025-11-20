@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ArrowLeftIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import React, { useState, useEffect } from 'react'
+import { ArrowLeftIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getActiveGuestVisits, updateGuestVisit } from '../services/guestVisitApi'
 import { getGuestByCNIC, getGuestByCode } from '../services/guestsApi'
 import type { GuestVisit, ApiError } from '../services/guestVisitApi'
@@ -20,6 +20,66 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
   const [isProcessing, setIsProcessing] = useState(false)
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [activeVisitsList, setActiveVisitsList] = useState<GuestVisit[]>([])
+  const [checkingOut, setCheckingOut] = useState<number | null>(null)
+
+  useEffect(() => {
+    const loadActiveVisits = async () => {
+      try {
+        const visits = await getActiveGuestVisits()
+        setActiveVisitsList(visits)
+      } catch (error) {
+        console.error('Error loading active visits:', error)
+      }
+    }
+
+    loadActiveVisits()
+    // Refresh every 30 seconds
+    const interval = setInterval(loadActiveVisits, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const formatTime = (timeString?: string | null) => {
+    if (!timeString) return 'N/A'
+    const date = new Date(timeString)
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const getTimeInDuration = (timeIn?: string | null) => {
+    if (!timeIn) return 'N/A'
+    const now = new Date()
+    const inTime = new Date(timeIn)
+    const diffMs = now.getTime() - inTime.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    if (diffMins < 60) return `${diffMins}m`
+    const hours = Math.floor(diffMins / 60)
+    const mins = diffMins % 60
+    return `${hours}h ${mins}m`
+  }
+
+  const handleQuickCheckout = async (visit: GuestVisit) => {
+    if (checkingOut === visit.idpk) return
+
+    setCheckingOut(visit.idpk)
+    try {
+      await updateGuestVisit(visit.idpk, {
+        TimeOut: new Date().toISOString(),
+        IsRFIDCardReturned: true,
+      })
+      
+      // Refresh the list
+      const visits = await getActiveGuestVisits()
+      setActiveVisitsList(visits)
+      
+      // Call onSuccess to refresh dashboard
+      onSuccess()
+    } catch (error) {
+      console.error('Error checking out visitor:', error)
+      alert('Failed to checkout visitor. Please try again.')
+    } finally {
+      setCheckingOut(null)
+    }
+  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -109,6 +169,61 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">Check Out - Visitor Exit</h2>
           <p className="text-neutral-600">Search for visitor to process exit</p>
         </div>
+
+        {/* Active Visitors List */}
+        {activeVisitsList.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
+                <ClockIcon className="w-6 h-6 text-blue-600" />
+                Active Visitors ({activeVisitsList.length})
+              </h2>
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {activeVisitsList.map((visit) => (
+                <div
+                  key={visit.idpk}
+                  className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg border border-neutral-200 hover:border-blue-300 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="font-semibold text-neutral-900">
+                      {visit.guest?.fullName || 'Unknown Visitor'}
+                    </div>
+                    <div className="text-sm text-neutral-600 mt-1">
+                      <span>CNIC: {visit.guest?.cnicNumber || 'N/A'}</span>
+                      {visit.rfidCardNumber && (
+                        <span className="ml-3">Card: {visit.rfidCardNumber}</span>
+                      )}
+                      <span className="ml-3">In: {formatTime(visit.timeIn)} ({getTimeInDuration(visit.timeIn)})</span>
+                    </div>
+                    {visit.departmentCategory?.categoryName && (
+                      <div className="text-xs text-neutral-500 mt-1">
+                        Destination: {visit.departmentCategory.categoryName}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleQuickCheckout(visit)}
+                    disabled={checkingOut === visit.idpk}
+                    className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {checkingOut === visit.idpk ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowLeftIcon className="w-4 h-4" />
+                        Check Out
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">

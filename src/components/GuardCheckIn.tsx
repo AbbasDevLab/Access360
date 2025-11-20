@@ -356,7 +356,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
           {/* OCR Confidence and Raw Text Display */}
-          {showOcrResults && ocrRawText && (
+          {/* {showOcrResults && ocrRawText && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-blue-900">OCR Verification</h3>
@@ -382,7 +382,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                 Hide
               </button>
             </div>
-          )}
+          )} */}
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>

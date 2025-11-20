@@ -1,34 +1,48 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
-import { createGuest } from '../services/guestsApi'
-import type { Guest, ApiError } from '../services/guestsApi'
+import { createGuard } from '../services/guardsApi'
+import { getAllLocations } from '../services/locationsApi'
+import type { Guard, ApiError } from '../services/guardsApi'
+import type { Location } from '../services/locationsApi'
 
-interface GuestFormProps {
-  onSuccess?: (guest: Guest) => void
+interface GuardFormProps {
+  onSuccess?: (guard: Guard) => void
   onError?: (error: string) => void
 }
 
-export default function GuestForm({
+export default function GuardForm({
   onSuccess,
   onError,
-}: GuestFormProps): JSX.Element {
-  const [formData, setFormData] = useState<Partial<Guest>>({
-    fullName: '',
-    fatherName: '',
-    gender: '',
-    country: '',
-    dob: '',
-    cnicNumber: '',
-    phoneNumber: '',
-    address: '',
-    guestCode: '',
-    guestStatus: true,
-    idpk: 0, // Auto-increment - not user-editable
-    guestCreatedBy: 'System',
+}: GuardFormProps): JSX.Element {
+  const [formData, setFormData] = useState<Partial<Guard>>({
+    id: '',
+    guardFullName: '',
+    guardCode: '',
+    username: '',
+    guardEmail: '',
+    guardPassword: '',
+    guardPhone: '',
+    guardStatus: true,
+    guardLocationIdpk: null,
+    guardIsDisabled: false,
+    guardCreatedBy: 'System',
   })
+  const [locations, setLocations] = useState<Location[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const locationsData = await getAllLocations()
+        setLocations(locationsData)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      }
+    }
+    loadData()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +51,7 @@ export default function GuestForm({
     setErrorMessage('')
 
     try {
-      const response = await createGuest(formData)
+      const response = await createGuard(formData)
       setSubmitStatus('success')
       
       if (onSuccess) {
@@ -46,18 +60,17 @@ export default function GuestForm({
 
       setTimeout(() => {
         setFormData({
-          fullName: '',
-          fatherName: '',
-          gender: '',
-          country: '',
-          dob: '',
-          cnicNumber: '',
-          phoneNumber: '',
-          address: '',
-          guestCode: '',
-          guestStatus: true,
-          idpk: 0, // Auto-increment - not user-editable
-          guestCreatedBy: 'System',
+          id: '',
+          guardFullName: '',
+          guardCode: '',
+          username: '',
+          guardEmail: '',
+          guardPassword: '',
+          guardPhone: '',
+          guardStatus: true,
+          guardLocationIdpk: null,
+          guardIsDisabled: false,
+          guardCreatedBy: 'System',
         })
         setSubmitStatus('idle')
       }, 2000)
@@ -65,7 +78,7 @@ export default function GuestForm({
       setSubmitStatus('error')
       const apiError = error as ApiError
       
-      let message = apiError.message || 'Failed to create guest'
+      let message = apiError.message || 'Failed to create guard'
       if (apiError.errors) {
         const validationMessages = Object.entries(apiError.errors)
           .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
@@ -83,7 +96,7 @@ export default function GuestForm({
     }
   }
 
-  const handleInputChange = (field: keyof Guest, value: string | boolean | number) => {
+  const handleInputChange = (field: keyof Guard, value: string | boolean | number | null) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -94,29 +107,29 @@ export default function GuestForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <label htmlFor="fullName" className="text-sm font-medium text-neutral-700">
+          <label htmlFor="id" className="text-sm font-medium text-neutral-700">
+            Guard ID <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="id"
+            type="text"
+            value={formData.id}
+            onChange={(e) => handleInputChange('id', e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="guardFullName" className="text-sm font-medium text-neutral-700">
             Full Name <span className="text-red-500">*</span>
           </label>
           <input
-            id="fullName"
+            id="guardFullName"
             type="text"
-            value={formData.fullName}
-            onChange={(e) => handleInputChange('fullName', e.target.value)}
-            required
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label htmlFor="fatherName" className="text-sm font-medium text-neutral-700">
-            Father Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="fatherName"
-            type="text"
-            value={formData.fatherName}
-            onChange={(e) => handleInputChange('fatherName', e.target.value)}
+            value={formData.guardFullName}
+            onChange={(e) => handleInputChange('guardFullName', e.target.value)}
             required
             disabled={isSubmitting}
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
@@ -124,147 +137,129 @@ export default function GuestForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <label htmlFor="gender" className="text-sm font-medium text-neutral-700">
-            Gender
+          <label htmlFor="username" className="text-sm font-medium text-neutral-700">
+            Username <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={formData.username}
+            onChange={(e) => handleInputChange('username', e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="guardEmail" className="text-sm font-medium text-neutral-700">
+            Email <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="guardEmail"
+            type="email"
+            value={formData.guardEmail}
+            onChange={(e) => handleInputChange('guardEmail', e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <label htmlFor="guardPassword" className="text-sm font-medium text-neutral-700">
+            Password <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="guardPassword"
+            type="password"
+            value={formData.guardPassword}
+            onChange={(e) => handleInputChange('guardPassword', e.target.value)}
+            required
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="guardPhone" className="text-sm font-medium text-neutral-700">
+            Phone
+          </label>
+          <input
+            id="guardPhone"
+            type="tel"
+            value={formData.guardPhone || ''}
+            onChange={(e) => handleInputChange('guardPhone', e.target.value)}
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <label htmlFor="guardCode" className="text-sm font-medium text-neutral-700">
+            Guard Code
+          </label>
+          <input
+            id="guardCode"
+            type="text"
+            value={formData.guardCode || ''}
+            onChange={(e) => handleInputChange('guardCode', e.target.value)}
+            disabled={isSubmitting}
+            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <label htmlFor="guardLocationIdpk" className="text-sm font-medium text-neutral-700">
+            Location
           </label>
           <select
-            id="gender"
-            value={formData.gender || ''}
-            onChange={(e) => handleInputChange('gender', e.target.value)}
+            id="guardLocationIdpk"
+            value={formData.guardLocationIdpk || ''}
+            onChange={(e) => handleInputChange('guardLocationIdpk', e.target.value ? parseInt(e.target.value) : null)}
             disabled={isSubmitting}
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
           >
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option value="">Select Location</option>
+            {locations.map((location) => (
+              <option key={location.idpk} value={location.idpk}>
+                {location.locName}
+              </option>
+            ))}
           </select>
         </div>
-
-        <div className="grid gap-2">
-          <label htmlFor="country" className="text-sm font-medium text-neutral-700">
-            Country
-          </label>
-          <input
-            id="country"
-            type="text"
-            value={formData.country || ''}
-            onChange={(e) => handleInputChange('country', e.target.value)}
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label htmlFor="dob" className="text-sm font-medium text-neutral-700">
-            Date of Birth
-          </label>
-          <input
-            id="dob"
-            type="text"
-            value={formData.dob || ''}
-            onChange={(e) => handleInputChange('dob', e.target.value)}
-            disabled={isSubmitting}
-            placeholder="YYYY-MM-DD"
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          />
-        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <label htmlFor="cnicNumber" className="text-sm font-medium text-neutral-700">
-            CNIC Number <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="cnicNumber"
-            type="text"
-            value={formData.cnicNumber}
-            onChange={(e) => handleInputChange('cnicNumber', e.target.value)}
-            required
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-            placeholder="12345-1234567-1"
-          />
-        </div>
-
-        <div className="grid gap-2">
-          <label htmlFor="phoneNumber" className="text-sm font-medium text-neutral-700">
-            Phone Number <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="phoneNumber"
-            type="tel"
-            value={formData.phoneNumber}
-            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-            required
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-2">
-        <label htmlFor="address" className="text-sm font-medium text-neutral-700">
-          Address <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="address"
-          value={formData.address}
-          onChange={(e) => handleInputChange('address', e.target.value)}
-          required
-          disabled={isSubmitting}
-          rows={3}
-          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <label htmlFor="guestCode" className="text-sm font-medium text-neutral-700">
-            Guest Code <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="guestCode"
-            type="text"
-            value={formData.guestCode}
-            onChange={(e) => handleInputChange('guestCode', e.target.value)}
-            required
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          />
-        </div>
-
-      </div>
-
-      <div className="grid gap-2">
-        <label htmlFor="guestStatus" className="text-sm font-medium text-neutral-700">
-          Status
-        </label>
         <div className="flex items-center gap-4">
           <label className="inline-flex items-center gap-2 cursor-pointer">
             <input
-              type="radio"
-              name="guestStatus"
-              checked={formData.guestStatus === true}
-              onChange={() => handleInputChange('guestStatus', true)}
+              type="checkbox"
+              checked={formData.guardStatus || false}
+              onChange={(e) => handleInputChange('guardStatus', e.target.checked)}
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-neutral-700">Active</span>
+            <span className="text-sm text-neutral-700">Active Status</span>
           </label>
+        </div>
+
+        <div className="flex items-center gap-4">
           <label className="inline-flex items-center gap-2 cursor-pointer">
             <input
-              type="radio"
-              name="guestStatus"
-              checked={formData.guestStatus === false}
-              onChange={() => handleInputChange('guestStatus', false)}
+              type="checkbox"
+              checked={formData.guardIsDisabled || false}
+              onChange={(e) => handleInputChange('guardIsDisabled', e.target.checked)}
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-neutral-700">Inactive</span>
+            <span className="text-sm text-neutral-700">Disabled</span>
           </label>
         </div>
       </div>
@@ -279,13 +274,13 @@ export default function GuestForm({
       {submitStatus === 'success' && (
         <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircleIcon className="w-5 h-5 text-green-600" />
-          <span className="text-sm text-green-700">Guest created successfully!</span>
+          <span className="text-sm text-green-700">Guard created successfully!</span>
         </div>
       )}
 
       <button
         type="submit"
-        disabled={isSubmitting || !formData.fullName?.trim() || !formData.fatherName?.trim() || !formData.cnicNumber?.trim() || !formData.phoneNumber?.trim() || !formData.address?.trim() || !formData.guestCode?.trim()}
+        disabled={isSubmitting || !formData.id?.trim() || !formData.guardFullName?.trim() || !formData.username?.trim() || !formData.guardEmail?.trim() || !formData.guardPassword?.trim()}
         className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
@@ -297,7 +292,7 @@ export default function GuestForm({
             Creating...
           </>
         ) : (
-          'Create Guest'
+          'Create Guard'
         )}
       </button>
     </form>

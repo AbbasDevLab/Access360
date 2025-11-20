@@ -16,7 +16,7 @@ export default function LocationForm({
     locPrefix: '',
     locName: '',
     locStatus: true,
-    idpk: 1,
+    idpk: 0, // Auto-increment - not user-editable
     locCreatedBy: 'System',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,7 +42,7 @@ export default function LocationForm({
           locPrefix: '',
           locName: '',
           locStatus: true,
-          idpk: 1,
+          idpk: 0, // Auto-increment - not user-editable
           locCreatedBy: 'System',
         })
         setSubmitStatus('idle')
@@ -187,19 +187,6 @@ export default function LocationForm({
         />
       </div>
 
-      <div className="grid gap-2">
-        <label htmlFor="idpk" className="text-sm font-medium text-neutral-700">
-          ID PK
-        </label>
-        <input
-          id="idpk"
-          type="number"
-          value={formData.idpk || ''}
-          onChange={(e) => handleInputChange('idpk', parseInt(e.target.value) || 1)}
-          disabled={isSubmitting}
-          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-        />
-      </div>
 
       {submitStatus === 'error' && errorMessage && (
         <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">

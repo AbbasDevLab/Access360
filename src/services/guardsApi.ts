@@ -1,28 +1,49 @@
-import { createApiUrl, VISITOR_TYPE_ENDPOINTS } from '../data/global'
+import { createApiUrl, ADMIN_ENDPOINTS } from '../data/global'
 
-// ==================== Visitor Type Types ====================
+// ==================== Guard Types ====================
 
-export interface VisitorType {
-  idpk: number
-  vTypeName: string
-  vTypeStatus?: boolean | null
-  vTypeCreatedBy?: string | null
-  vTypeCreatedAt?: string | null
-  vTypeUpdatedBy?: string | null
-  vTypeUpdatedAt?: string | null
+export interface Guard {
+  id: string
+  guardFullName: string
+  guardCode?: string | null
+  username: string
+  guardEmail: string
+  guardPassword?: string
+  guardPhone?: string | null
+  guardStatus: boolean
+  guardLocationIdpk?: number | null
+  guardIsDisabled: boolean
+  guardCreatedBy?: string | null
+  guardCreatedAt?: string | null
+  guardUpdatedBy?: string | null
+  guardUpdatedAt?: string | null
+  location?: any
 }
 
-export interface CreateVisitorTypeDto {
-  Idpk: number
-  VTypeName: string
-  VTypeStatus?: boolean | null
-  VTypeCreatedBy?: string | null
+export interface CreateGuardDto {
+  Id: string
+  GuardFullName: string
+  GuardCode?: string | null
+  Username: string
+  GuardEmail: string
+  GuardPassword: string
+  GuardPhone?: string | null
+  GuardStatus: boolean
+  GuardLocationIdpk?: number | null
+  GuardIsDisabled: boolean
+  GuardCreatedBy?: string | null
 }
 
-export interface UpdateVisitorTypeDto {
-  VTypeName: string
-  VTypeStatus?: boolean | null
-  VTypeUpdatedBy?: string | null
+export interface UpdateGuardDto {
+  GuardFullName: string
+  GuardCode?: string | null
+  Username: string
+  GuardEmail: string
+  GuardPhone?: string | null
+  GuardStatus: boolean
+  GuardLocationIdpk?: number | null
+  GuardIsDisabled: boolean
+  GuardUpdatedBy?: string | null
 }
 
 export interface ApiError {
@@ -31,11 +52,11 @@ export interface ApiError {
   errors?: Record<string, string[]>
 }
 
-// ==================== Visitor Type API ====================
+// ==================== Guard API ====================
 
-export const getAllVisitorTypes = async (): Promise<VisitorType[]> => {
+export const getAllGuards = async (): Promise<Guard[]> => {
   try {
-    const response = await fetch(createApiUrl(VISITOR_TYPE_ENDPOINTS.GET_ALL), {
+    const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.GET_GUARDS), {
       method: 'GET',
       headers: { 'accept': '*/*' },
     })
@@ -54,13 +75,13 @@ export const getAllVisitorTypes = async (): Promise<VisitorType[]> => {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw { message: 'Network error: Failed to fetch visitor types', status: 0 } as ApiError
+    throw { message: 'Network error: Failed to fetch guards', status: 0 } as ApiError
   }
 }
 
-export const getVisitorTypeById = async (id: number): Promise<VisitorType> => {
+export const getGuardById = async (id: string): Promise<Guard> => {
   try {
-    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.GET_BY_ID.replace('{id}', id.toString()))
+    const url = createApiUrl(ADMIN_ENDPOINTS.GET_GUARD_BY_ID.replace('{id}', encodeURIComponent(id)))
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'accept': '*/*' },
@@ -80,20 +101,27 @@ export const getVisitorTypeById = async (id: number): Promise<VisitorType> => {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw { message: 'Network error: Failed to fetch visitor type', status: 0 } as ApiError
+    throw { message: 'Network error: Failed to fetch guard', status: 0 } as ApiError
   }
 }
 
-export const createVisitorType = async (visitorType: Partial<VisitorType>): Promise<any> => {
+export const createGuard = async (guard: Partial<Guard>): Promise<any> => {
   try {
-    const dto: CreateVisitorTypeDto = {
-      Idpk: 0, // Auto-increment - always set to 0
-      VTypeName: visitorType.vTypeName || '',
-      VTypeStatus: visitorType.vTypeStatus ?? true,
-      VTypeCreatedBy: visitorType.vTypeCreatedBy || 'System',
+    const dto: CreateGuardDto = {
+      Id: guard.id || '',
+      GuardFullName: guard.guardFullName || '',
+      GuardCode: guard.guardCode || null,
+      Username: guard.username || '',
+      GuardEmail: guard.guardEmail || '',
+      GuardPassword: guard.guardPassword || '',
+      GuardPhone: guard.guardPhone || null,
+      GuardStatus: guard.guardStatus ?? true,
+      GuardLocationIdpk: guard.guardLocationIdpk || null,
+      GuardIsDisabled: guard.guardIsDisabled ?? false,
+      GuardCreatedBy: guard.guardCreatedBy || 'System',
     }
 
-    const response = await fetch(createApiUrl(VISITOR_TYPE_ENDPOINTS.CREATE), {
+    const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.CREATE_GUARD), {
       method: 'POST',
       headers: {
         'accept': '*/*',
@@ -126,34 +154,24 @@ export const createVisitorType = async (visitorType: Partial<VisitorType>): Prom
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw { message: 'Network error: Failed to create visitor type', status: 0 } as ApiError
+    throw { message: 'Network error: Failed to create guard', status: 0 } as ApiError
   }
 }
 
-export const updateVisitorType = async (id: number, visitorType: UpdateVisitorTypeDto): Promise<any> => {
+export const updateGuard = async (id: string, guard: UpdateGuardDto): Promise<any> => {
   try {
-    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.UPDATE.replace('{id}', id.toString()))
+    const url = createApiUrl(ADMIN_ENDPOINTS.UPDATE_GUARD.replace('{id}', encodeURIComponent(id)))
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(visitorType),
+      body: JSON.stringify(guard),
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      if (response.status === 400 && errorData.errors) {
-        const validationErrors = Object.entries(errorData.errors)
-          .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-          .join('; ')
-        throw {
-          message: validationErrors || errorData.message || 'Validation error',
-          status: response.status,
-          errors: errorData.errors,
-        } as ApiError
-      }
       throw {
         message: errorData.message || `HTTP error! status: ${response.status}`,
         status: response.status,
@@ -166,13 +184,13 @@ export const updateVisitorType = async (id: number, visitorType: UpdateVisitorTy
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw { message: 'Network error: Failed to update visitor type', status: 0 } as ApiError
+    throw { message: 'Network error: Failed to update guard', status: 0 } as ApiError
   }
 }
 
-export const deleteVisitorType = async (id: number): Promise<any> => {
+export const deleteGuard = async (id: string): Promise<void> => {
   try {
-    const url = createApiUrl(VISITOR_TYPE_ENDPOINTS.DELETE.replace('{id}', id.toString()))
+    const url = createApiUrl(ADMIN_ENDPOINTS.DELETE_GUARD.replace('{id}', encodeURIComponent(id)))
     const response = await fetch(url, {
       method: 'DELETE',
       headers: { 'accept': '*/*' },
@@ -186,13 +204,11 @@ export const deleteVisitorType = async (id: number): Promise<any> => {
         errors: errorData.errors,
       } as ApiError
     }
-
-    return await response.json()
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
     }
-    throw { message: 'Network error: Failed to delete visitor type', status: 0 } as ApiError
+    throw { message: 'Network error: Failed to delete guard', status: 0 } as ApiError
   }
 }
 

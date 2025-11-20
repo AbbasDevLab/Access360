@@ -27,10 +27,19 @@ const preprocessImage = (imageData: string): Promise<string> => {
         return
       }
 
-      // Scale up for better OCR (minimum 1200px width)
-      const scale = Math.max(1200 / img.width, 1)
-      canvas.width = img.width * scale
-      canvas.height = img.height * scale
+      // Scale up for better OCR (optimized: max 1000px width for faster processing)
+      const maxWidth = 1000
+      const scale = img.width < maxWidth ? Math.max(maxWidth / img.width, 1) : 1
+      // Limit maximum dimensions to prevent excessive processing time
+      const maxDimension = 1500
+      if (img.width * scale > maxDimension || img.height * scale > maxDimension) {
+        const scaleFactor = Math.min(maxDimension / img.width, maxDimension / img.height)
+        canvas.width = img.width * scaleFactor
+        canvas.height = img.height * scaleFactor
+      } else {
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+      }
 
       // Draw original image scaled up
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
@@ -113,22 +122,26 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
     const processedImage = await preprocessImage(imageData)
     console.log('Image preprocessing complete')
 
-    // Initialize Tesseract worker with better configuration
+    // Initialize Tesseract worker with optimized configuration
+    // Use LSTM engine (mode 1) which is faster and still accurate
     const worker = await Tesseract.createWorker('eng', 1, {
       logger: (m) => {
-        // Log progress
+        // Log progress only every 20% to reduce console spam
         if (m.status === 'recognizing text') {
-          console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`)
+          const progress = Math.round(m.progress * 100)
+          // Only log at 0%, 20%, 40%, 60%, 80%, 100%
+          if (progress === 0 || progress % 20 === 0 || progress === 100) {
+            console.log(`OCR Progress: ${progress}%`)
+          }
         }
       },
     })
 
-    // Set OCR parameters for maximum accuracy
+    // Set OCR parameters (tessedit_ocr_engine_mode must be set during initialization, not here)
     await worker.setParameters({
       tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
-      tessedit_pageseg_mode: 6 as any, // Assume a single uniform block of text
+      tessedit_pageseg_mode: 6 as any, // Assume a single uniform block of text (faster)
       preserve_interword_spaces: '1',
-      tessedit_ocr_engine_mode: '2', // Use LSTM OCR engine for better accuracy
     })
 
     // Perform OCR on preprocessed image
@@ -141,12 +154,13 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
     // Terminate worker
     await worker.terminate()
 
-    // If confidence is low, try again with different PSM mode
+    // Use first result - skip second attempt for speed (OpenAI will handle extraction)
+    // Only retry if confidence is very low (< 30%) and we got no text
     let finalText = text
     let finalConfidence = confidence
 
-    if (confidence < 70) {
-      console.log('Low confidence, trying alternative OCR mode...')
+    if (confidence < 30 && (!text || text.trim().length < 10)) {
+      console.log('Very low confidence with minimal text, trying alternative OCR mode...')
       const worker2 = await Tesseract.createWorker('eng', 1, {
         logger: () => {}, // Silent for second attempt
       })
@@ -155,14 +169,13 @@ export const extractTextFromImage = async (imageData: string): Promise<OCRResult
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
         tessedit_pageseg_mode: 11 as any, // Sparse text (find as much text as possible in no particular order)
         preserve_interword_spaces: '1',
-        tessedit_ocr_engine_mode: '2',
       })
 
       const { data: { text: text2, confidence: confidence2 } } = await worker2.recognize(processedImage)
       await worker2.terminate()
 
-      // Use the result with higher confidence
-      if (confidence2 > confidence) {
+      // Use the result with higher confidence or more text
+      if (confidence2 > confidence || (text2 && text2.trim().length > text.trim().length)) {
         finalText = text2
         finalConfidence = confidence2
         console.log(`Using alternative OCR mode, confidence: ${finalConfidence}%`)

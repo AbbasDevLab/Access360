@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   UserPlusIcon, 
   QrCodeIcon, 
@@ -9,8 +10,39 @@ import {
 } from '@heroicons/react/24/outline'
 
 export default function HomeRoute(): JSX.Element {
+  const navigate = useNavigate()
+  const [adminUser, setAdminUser] = useState<any>(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('adminUser')
+    if (stored) {
+      try {
+        const user = JSON.parse(stored)
+        if (user.loggedIn) {
+          setAdminUser(user)
+        }
+      } catch (e) {
+        // Invalid data
+      }
+    }
+  }, [])
+
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto space-y-6">
+      {!adminUser && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-blue-800 font-medium">Admin access required for most features</p>
+            <p className="text-xs text-blue-600 mt-1">Please login to access enrollment, reports, and management features</p>
+          </div>
+          <button
+            onClick={() => navigate('/login')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            Login
+          </button>
+        </div>
+      )}
       {/* Hero Section */}
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-3 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium">

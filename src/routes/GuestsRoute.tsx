@@ -25,76 +25,54 @@ export default function GuestsRoute(): JSX.Element {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 flex items-center gap-3">
-            <UserIcon className="w-8 h-8 text-blue-600" />
-            Guests Management
-          </h1>
-          <p className="text-neutral-600 mt-2">
-            Manage guests in your system
-          </p>
-        </div>
-        <div className="flex gap-2 bg-neutral-100 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveView('create')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeView === 'create'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            <PlusIcon className="w-4 h-4" />
-            Add Guest
-          </button>
-          <button
-            onClick={() => setActiveView('list')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeView === 'list'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            <ListBulletIcon className="w-4 h-4" />
-            View Guests
-          </button>
-        </div>
+    <div className="max-w-7xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+        <UserIcon className="w-6 h-6 text-blue-600" />
+        Guests Management
+      </h1>
+
+      {/* Large Action Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setActiveView('create')}
+          className={`flex-1 px-6 py-4 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-2 ${
+            activeView === 'create'
+              ? 'bg-green-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-green-300'
+          }`}
+        >
+          <PlusIcon className="w-5 h-5" />
+          Add Guest
+        </button>
+        <button
+          onClick={() => setActiveView('list')}
+          className={`flex-1 px-6 py-4 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-2 ${
+            activeView === 'list'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300'
+          }`}
+        >
+          <ListBulletIcon className="w-5 h-5" />
+          View Guests
+        </button>
       </div>
 
-      {activeView === 'create' && (
-        <div className="bg-white rounded-xl border border-neutral-200 p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-              Create New Guest
-            </h2>
-            <p className="text-sm text-neutral-600">
-              Add a new guest to your system.
-            </p>
-          </div>
+      {/* One-page content */}
+      <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        {activeView === 'create' && (
           <GuestForm
             onSuccess={handleGuestCreated}
             onError={(error) => console.error('Error creating guest:', error)}
           />
-        </div>
-      )}
+        )}
 
-      {activeView === 'list' && (
-        <div className="bg-white rounded-xl border border-neutral-200 p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-              Guests
-            </h2>
-            <p className="text-sm text-neutral-600">
-              View and manage all guests.
-            </p>
-          </div>
+        {activeView === 'list' && (
           <GuestList
             key={refreshKey}
             onRefresh={handleRefreshNeeded}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

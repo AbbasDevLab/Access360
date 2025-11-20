@@ -15,7 +15,7 @@ export default function DepartmentCategoryForm({
   const [formData, setFormData] = useState<Partial<DepartmentCategory>>({
     categoryName: '',
     categoryStatus: true,
-    idpk: 1,
+    idpk: 0, // Auto-increment - not user-editable
     categoryCreatedBy: 'System',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,7 +41,7 @@ export default function DepartmentCategoryForm({
         setFormData({
           categoryName: '',
           categoryStatus: true,
-          idpk: 1,
+          idpk: 0, // Auto-increment - not user-editable
           categoryCreatedBy: 'System',
         })
         setSubmitStatus('idle')
@@ -129,20 +129,6 @@ export default function DepartmentCategoryForm({
         </div>
       </div>
 
-      {/* ID PK */}
-      <div className="grid gap-2">
-        <label htmlFor="idpk" className="text-sm font-medium text-neutral-700">
-          ID PK
-        </label>
-        <input
-          id="idpk"
-          type="number"
-          value={formData.idpk || ''}
-          onChange={(e) => handleInputChange('idpk', parseInt(e.target.value) || 1)}
-          disabled={isSubmitting}
-          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-        />
-      </div>
 
       {/* Error Message */}
       {submitStatus === 'error' && errorMessage && (

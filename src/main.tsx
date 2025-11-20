@@ -14,8 +14,10 @@ import GuestVisitsRoute from './routes/GuestVisitsRoute'
 import LocationsRoute from './routes/LocationsRoute'
 import VisitorTypesRoute from './routes/VisitorTypesRoute'
 import AdminRoute from './routes/AdminRoute'
+import AdminLoginRoute from './routes/AdminLoginRoute'
 import GuardLoginRoute from './routes/GuardLoginRoute'
 import GuardDashboardRoute from './routes/GuardDashboardRoute'
+import ProtectedRoute from './components/ProtectedRoute'
 import { setupI18n } from './i18n'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -28,18 +30,20 @@ const router = createBrowserRouter([
     element: <RouterRoot />,
     children: [
       { index: true, element: <HomeRoute /> },
-      { path: 'enroll', element: <EnrollRoute /> },
+      { path: 'enroll', element: <ProtectedRoute><EnrollRoute /></ProtectedRoute> },
       { path: 'verify', element: (<React.Suspense fallback={null}><VerifyRoute /></React.Suspense>) },
-      { path: 'passes', element: <PassesRoute /> },
-      { path: 'departments', element: <DepartmentsRoute /> },
-      { path: 'guests', element: <GuestsRoute /> },
-      { path: 'guest-visits', element: <GuestVisitsRoute /> },
-      { path: 'locations', element: <LocationsRoute /> },
-      { path: 'visitor-types', element: <VisitorTypesRoute /> },
-      { path: 'admin', element: <AdminRoute /> },
+      { path: 'passes', element: <ProtectedRoute><PassesRoute /></ProtectedRoute> },
+      { path: 'departments', element: <ProtectedRoute><DepartmentsRoute /></ProtectedRoute> },
+      { path: 'guests', element: <ProtectedRoute><GuestsRoute /></ProtectedRoute> },
+      { path: 'guest-visits', element: <ProtectedRoute><GuestVisitsRoute /></ProtectedRoute> },
+      { path: 'locations', element: <ProtectedRoute><LocationsRoute /></ProtectedRoute> },
+      { path: 'visitor-types', element: <ProtectedRoute><VisitorTypesRoute /></ProtectedRoute> },
+      { path: 'admin', element: <ProtectedRoute><AdminRoute /></ProtectedRoute> },
       { path: '*', element: <HomeRoute /> },
     ],
   },
+  // Admin login route (standalone, not wrapped in RouterRoot)
+  { path: 'login', element: <AdminLoginRoute /> },
   // Guard routes (standalone, not wrapped in RouterRoot)
   { path: 'guard/login', element: <GuardLoginRoute /> },
   { path: 'guard/dashboard', element: <GuardDashboardRoute /> },

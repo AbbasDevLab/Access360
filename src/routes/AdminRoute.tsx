@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { ShieldCheckIcon, PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline'
+import { ShieldCheckIcon, PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
 import CompanyForm from '../components/CompanyForm'
 import CompanyList from '../components/CompanyList'
+import GuardForm from '../components/GuardForm'
+import GuardList from '../components/GuardList'
 import type { AdminUser, Company } from '../services/adminApi'
+import type { Guard } from '../services/guardsApi'
 
 export default function AdminRoute() {
-  const [activeTab, setActiveTab] = useState<'users' | 'companies'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'companies' | 'guards'>('users')
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -35,148 +38,150 @@ export default function AdminRoute() {
     }
   }
 
+  const handleGuardCreated = (guard: Guard) => {
+    console.log('Guard created:', guard)
+    if (activeView === 'list') {
+      setRefreshKey(prev => prev + 1)
+    } else {
+      setTimeout(() => {
+        setActiveView('list')
+        setRefreshKey(prev => prev + 1)
+      }, 2000)
+    }
+  }
+
   const handleRefreshNeeded = () => {
     setRefreshKey(prev => prev + 1)
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 flex items-center gap-3">
-            <ShieldCheckIcon className="w-8 h-8 text-blue-600" />
-            Admin Management
-          </h1>
-          <p className="text-neutral-600 mt-2">
-            Manage admin users and companies
-          </p>
-        </div>
-        <div className="flex gap-2 bg-neutral-100 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'users'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            <UserIcon className="w-4 h-4" />
-            Users
-          </button>
-          <button
-            onClick={() => setActiveTab('companies')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-              activeTab === 'companies'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-neutral-600 hover:text-neutral-800'
-            }`}
-          >
-            <BuildingOfficeIcon className="w-4 h-4" />
-            Companies
-          </button>
-        </div>
+    <div className="max-w-7xl mx-auto space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+          <ShieldCheckIcon className="w-6 h-6 text-blue-600" />
+          Admin Management
+        </h1>
       </div>
 
-      <div className="flex gap-2 bg-neutral-100 p-1 rounded-xl">
+      {/* Large Tab Buttons */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
         <button
-          onClick={() => setActiveView('create')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-            activeView === 'create'
-              ? 'bg-white text-blue-700 shadow-sm'
-              : 'text-neutral-600 hover:text-neutral-800'
+          onClick={() => setActiveTab('users')}
+          className={`px-6 py-4 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-3 ${
+            activeTab === 'users'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300'
           }`}
         >
-          <PlusIcon className="w-4 h-4" />
-          Add {activeTab === 'users' ? 'User' : 'Company'}
+          <UserIcon className="w-6 h-6" />
+          Users
+        </button>
+        <button
+          onClick={() => setActiveTab('companies')}
+          className={`px-6 py-4 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-3 ${
+            activeTab === 'companies'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300'
+          }`}
+        >
+          <BuildingOfficeIcon className="w-6 h-6" />
+          Companies
+        </button>
+        <button
+          onClick={() => setActiveTab('guards')}
+          className={`px-6 py-4 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-3 ${
+            activeTab === 'guards'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300'
+          }`}
+        >
+          <LockClosedIcon className="w-6 h-6" />
+          Guards
+        </button>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 mb-4">
+        <button
+          onClick={() => setActiveView('create')}
+          className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-2 ${
+            activeView === 'create'
+              ? 'bg-green-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-green-300'
+          }`}
+        >
+          <PlusIcon className="w-5 h-5" />
+          Add {activeTab === 'users' ? 'User' : activeTab === 'companies' ? 'Company' : 'Guard'}
         </button>
         <button
           onClick={() => setActiveView('list')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+          className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all flex items-center justify-center gap-2 ${
             activeView === 'list'
-              ? 'bg-white text-blue-700 shadow-sm'
-              : 'text-neutral-600 hover:text-neutral-800'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300'
           }`}
         >
-          <ListBulletIcon className="w-4 h-4" />
-          View {activeTab === 'users' ? 'Users' : 'Companies'}
+          <ListBulletIcon className="w-5 h-5" />
+          View {activeTab === 'users' ? 'Users' : activeTab === 'companies' ? 'Companies' : 'Guards'}
         </button>
       </div>
 
-      {activeTab === 'users' && (
-        <>
-          {activeView === 'create' && (
-            <div className="bg-white rounded-xl border border-neutral-200 p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Create New Admin User
-                </h2>
-                <p className="text-sm text-neutral-600">
-                  Add a new admin user to your system.
-                </p>
-              </div>
+      {/* Content Area - One Page */}
+      <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        {activeTab === 'users' && (
+          <>
+            {activeView === 'create' && (
               <AdminUserForm
                 onSuccess={handleUserCreated}
                 onError={(error) => console.error('Error creating admin user:', error)}
               />
-            </div>
-          )}
+            )}
 
-          {activeView === 'list' && (
-            <div className="bg-white rounded-xl border border-neutral-200 p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Admin Users
-                </h2>
-                <p className="text-sm text-neutral-600">
-                  View and manage all admin users.
-                </p>
-              </div>
+            {activeView === 'list' && (
               <AdminUserList
                 key={refreshKey}
                 onRefresh={handleRefreshNeeded}
               />
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
 
-      {activeTab === 'companies' && (
-        <>
-          {activeView === 'create' && (
-            <div className="bg-white rounded-xl border border-neutral-200 p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Create New Company
-                </h2>
-                <p className="text-sm text-neutral-600">
-                  Add a new company to your system.
-                </p>
-              </div>
+        {activeTab === 'companies' && (
+          <>
+            {activeView === 'create' && (
               <CompanyForm
                 onSuccess={handleCompanyCreated}
                 onError={(error) => console.error('Error creating company:', error)}
               />
-            </div>
-          )}
+            )}
 
-          {activeView === 'list' && (
-            <div className="bg-white rounded-xl border border-neutral-200 p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Companies
-                </h2>
-                <p className="text-sm text-neutral-600">
-                  View and manage all companies.
-                </p>
-              </div>
+            {activeView === 'list' && (
               <CompanyList
                 key={refreshKey}
                 onRefresh={handleRefreshNeeded}
               />
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+
+        {activeTab === 'guards' && (
+          <>
+            {activeView === 'create' && (
+              <GuardForm
+                onSuccess={handleGuardCreated}
+                onError={(error) => console.error('Error creating guard:', error)}
+              />
+            )}
+
+            {activeView === 'list' && (
+              <GuardList
+                key={refreshKey}
+                onRefresh={handleRefreshNeeded}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

@@ -111,7 +111,7 @@ export const getLocationById = async (id: number): Promise<Location> => {
 export const createLocation = async (location: Partial<Location>): Promise<any> => {
   try {
     const dto: CreateLocationDto = {
-      Idpk: location.idpk || 1,
+      Idpk: 0, // Auto-increment - always set to 0
       LocPrefix: location.locPrefix || '',
       LocName: location.locName || '',
       LocStatus: location.locStatus ?? true,

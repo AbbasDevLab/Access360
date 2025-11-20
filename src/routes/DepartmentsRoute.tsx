@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { BuildingOfficeIcon, PlusIcon, ListBulletIcon } from '@heroicons/react/24/outline'
 import DepartmentCategoryForm from '../components/DepartmentCategoryForm'
 import DepartmentCategoryList from '../components/DepartmentCategoryList'
+import { API_CONFIG } from '../data/global'
 import type { DepartmentCategory } from '../services/departmentApi'
 
 export default function DepartmentsRoute(): JSX.Element {
@@ -31,7 +32,7 @@ export default function DepartmentsRoute(): JSX.Element {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-7xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -114,10 +115,10 @@ export default function DepartmentsRoute(): JSX.Element {
         </h3>
         <div className="space-y-2 text-sm text-blue-800">
           <div>
-            <strong>Endpoint:</strong> POST <code className="bg-blue-100 px-2 py-1 rounded">/api/Departments/CreateDeptCategory/Category</code>
+            <strong>Endpoint:</strong> POST <code className="bg-blue-100 px-2 py-1 rounded">/Departments/CreateDeptCategory/Category</code>
           </div>
           <div>
-            <strong>Base URL:</strong> <code className="bg-blue-100 px-2 py-1 rounded">https://localhost:7215</code>
+            <strong>Base URL:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{API_CONFIG.BASE_URL}</code>
           </div>
           <div className="mt-4">
             <strong>Expected Response:</strong>

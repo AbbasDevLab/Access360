@@ -123,7 +123,7 @@ export const createDepartmentCategory = async (
   try {
     // Convert to backend DTO format (uppercase property names)
     const dto: CreateDeptCategoryDto = {
-      Idpk: category.idpk || 1,
+      Idpk: 0, // Auto-increment - always set to 0
       CategoryName: category.categoryName || '',
       CategoryStatus: category.categoryStatus ?? true,
       CategoryCreatedBy: category.categoryCreatedBy || 'System',

@@ -1,6 +1,6 @@
 // Global API configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://api.access360.site/backend/api/',
+  BASE_URL: 'https://localhost:7215/api/',
 } as const
 
 // API helper function to create full URLs

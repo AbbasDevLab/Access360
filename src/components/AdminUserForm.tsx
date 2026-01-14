@@ -4,6 +4,7 @@ import { createAdminUser, getAllCompanies } from '../services/adminApi'
 import { getAllLocations } from '../services/locationsApi'
 import type { AdminUser, ApiError, Company } from '../services/adminApi'
 import type { Location } from '../services/locationsApi'
+import { useTranslation } from 'react-i18next'
 
 interface AdminUserFormProps {
   onSuccess?: (user: AdminUser) => void
@@ -13,7 +14,8 @@ interface AdminUserFormProps {
 export default function AdminUserForm({
   onSuccess,
   onError,
-}: AdminUserFormProps): JSX.Element {
+}: AdminUserFormProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState<Partial<AdminUser>>({
     id: '',
     userFullName: '',
@@ -85,7 +87,7 @@ export default function AdminUserForm({
       setSubmitStatus('error')
       const apiError = error as ApiError
       
-      let message = apiError.message || 'Failed to create admin user'
+      let message = apiError.message || t('failedToCreateAdminUser')
       if (apiError.errors) {
         const validationMessages = Object.entries(apiError.errors)
           .map(([key, value]: [string, any]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
@@ -115,7 +117,7 @@ export default function AdminUserForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <label htmlFor="id" className="text-sm font-medium text-neutral-700">
-            User ID <span className="text-red-500">*</span>
+            <span className="font-semibold">{t('userID')}</span> / <span className="font-urdu text-base" dir="rtl">{t('userID', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
           </label>
           <input
             id="id"
@@ -130,7 +132,7 @@ export default function AdminUserForm({
 
         <div className="grid gap-2">
           <label htmlFor="userFullName" className="text-sm font-medium text-neutral-700">
-            Full Name <span className="text-red-500">*</span>
+            <span className="font-semibold">{t('fullName')}</span> / <span className="font-urdu text-base" dir="rtl">{t('fullName', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
           </label>
           <input
             id="userFullName"
@@ -147,7 +149,7 @@ export default function AdminUserForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <label htmlFor="username" className="text-sm font-medium text-neutral-700">
-            Username <span className="text-red-500">*</span>
+            <span className="font-semibold">{t('username')}</span> / <span className="font-urdu text-base" dir="rtl">{t('username', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
           </label>
           <input
             id="username"
@@ -162,7 +164,7 @@ export default function AdminUserForm({
 
         <div className="grid gap-2">
           <label htmlFor="userEmail" className="text-sm font-medium text-neutral-700">
-            Email <span className="text-red-500">*</span>
+            <span className="font-semibold">{t('email')}</span> / <span className="font-urdu text-base" dir="rtl">{t('email', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
           </label>
           <input
             id="userEmail"
@@ -179,7 +181,7 @@ export default function AdminUserForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <label htmlFor="userPassword" className="text-sm font-medium text-neutral-700">
-            Password <span className="text-red-500">*</span>
+            <span className="font-semibold">{t('password')}</span> / <span className="font-urdu text-base" dir="rtl">{t('password', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
           </label>
           <input
             id="userPassword"
@@ -194,7 +196,7 @@ export default function AdminUserForm({
 
         <div className="grid gap-2">
           <label htmlFor="userCode" className="text-sm font-medium text-neutral-700">
-            User Code
+            <span className="font-semibold">{t('userCode')}</span> / <span className="font-urdu text-base" dir="rtl">{t('userCode', { lng: 'ur' })}</span>
           </label>
           <input
             id="userCode"
@@ -210,7 +212,7 @@ export default function AdminUserForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
           <label htmlFor="userCompanyIdpk" className="text-sm font-medium text-neutral-700">
-            Company
+            <span className="font-semibold">{t('company')}</span> / <span className="font-urdu text-base" dir="rtl">{t('company', { lng: 'ur' })}</span>
           </label>
           <select
             id="userCompanyIdpk"
@@ -219,7 +221,7 @@ export default function AdminUserForm({
             disabled={isSubmitting}
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
           >
-            <option value="">Select Company</option>
+            <option value="">{t('selectCompany')} / {t('selectCompany', { lng: 'ur' })}</option>
             {companies.map((company) => (
               <option key={company.idpk} value={company.idpk}>
                 {company.cmpName}
@@ -230,7 +232,7 @@ export default function AdminUserForm({
 
         <div className="grid gap-2">
           <label htmlFor="userLocationIdpk" className="text-sm font-medium text-neutral-700">
-            Location
+            <span className="font-semibold">{t('location')}</span> / <span className="font-urdu text-base" dir="rtl">{t('location', { lng: 'ur' })}</span>
           </label>
           <select
             id="userLocationIdpk"
@@ -239,7 +241,7 @@ export default function AdminUserForm({
             disabled={isSubmitting}
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
           >
-            <option value="">Select Location</option>
+            <option value="">{t('selectLocation')} / {t('selectLocation', { lng: 'ur' })}</option>
             {locations.map((location) => (
               <option key={location.idpk} value={location.idpk}>
                 {location.locName}
@@ -259,7 +261,9 @@ export default function AdminUserForm({
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-neutral-700">Active Status</span>
+            <span className="text-sm text-neutral-700">
+              <span className="font-semibold">{t('activeStatus')}</span> / <span className="font-urdu text-base" dir="rtl">{t('activeStatus', { lng: 'ur' })}</span>
+            </span>
           </label>
         </div>
 
@@ -272,7 +276,9 @@ export default function AdminUserForm({
               disabled={isSubmitting}
               className="size-4 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-neutral-700">Disabled</span>
+            <span className="text-sm text-neutral-700">
+              <span className="font-semibold">{t('disabled')}</span> / <span className="font-urdu text-base" dir="rtl">{t('disabled', { lng: 'ur' })}</span>
+            </span>
           </label>
         </div>
       </div>
@@ -287,7 +293,9 @@ export default function AdminUserForm({
       {submitStatus === 'success' && (
         <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircleIcon className="w-5 h-5 text-green-600" />
-          <span className="text-sm text-green-700">Admin user created successfully!</span>
+          <span className="text-sm text-green-700">
+            <span>{t('adminUserCreatedSuccess')}</span> / <span className="font-urdu text-base" dir="rtl">{t('adminUserCreatedSuccess', { lng: 'ur' })}</span>
+          </span>
         </div>
       )}
 
@@ -302,10 +310,12 @@ export default function AdminUserForm({
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Creating...
+            {t('creating')} / <span className="font-urdu text-base" dir="rtl">{t('creating', { lng: 'ur' })}</span>
           </>
         ) : (
-          'Create Admin User'
+          <>
+            {t('createAdminUser')} / <span className="font-urdu text-base" dir="rtl">{t('createAdminUser', { lng: 'ur' })}</span>
+          </>
         )}
       </button>
     </form>

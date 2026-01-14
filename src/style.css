@@ -7,3 +7,10 @@
 html, body, #root {
   height: 100%;
 }
+
+/* Urdu font styling */
+.font-urdu {
+  font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Al Qalam Taj Nastaleeq", "Nafees Web Naskh", "Urdu Typesetting", "Tahoma", "Arial Unicode MS", sans-serif;
+  font-size: 0.95em;
+  line-height: 1.6;
+}

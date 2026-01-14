@@ -19,7 +19,11 @@ cp .env.example .env
 Or manually create `.env` with the following content:
 
 ```env
-# OpenAI API Key for OCR text extraction
+# OCR.space API Key for image text extraction
+# Get your API key from: https://ocr.space/ocrapi
+VITE_OCR_SPACE_API_KEY=your_ocr_space_api_key_here
+
+# OpenAI API Key for OCR text extraction and parsing
 # Get your API key from: https://platform.openai.com/api-keys
 VITE_OPENAI_API_KEY=your_openai_api_key_here
 
@@ -37,9 +41,14 @@ Replace `your_openai_api_key_here` with your actual OpenAI API key.
 
 ## Environment Variables Explained
 
-### `VITE_OPENAI_API_KEY`
+### `VITE_OCR_SPACE_API_KEY`
 - **Required:** Yes (for OCR functionality)
-- **Description:** OpenAI API key used for extracting structured data from CNIC OCR text
+- **Description:** OCR.space API key used for extracting text from ID card images
+- **Get your key:** https://ocr.space/ocrapi
+
+### `VITE_OPENAI_API_KEY`
+- **Required:** Yes (for OCR text parsing)
+- **Description:** OpenAI API key used for extracting structured data from CNIC OCR text (parsing names, CNIC numbers)
 - **Get your key:** https://platform.openai.com/api-keys
 
 ### `VITE_API_BASE_URL`

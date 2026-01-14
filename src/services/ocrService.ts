@@ -1,5 +1,3 @@
-import Tesseract from 'tesseract.js'
-
 export interface OCRResult {
   fullName?: string
   fatherName?: string
@@ -9,213 +7,176 @@ export interface OCRResult {
   confidence?: number
 }
 
+// OCR.space API Key - Load from environment variable for security
+// Set VITE_OCR_SPACE_API_KEY in your .env file
+const OCR_SPACE_API_KEY = import.meta.env.VITE_OCR_SPACE_API_KEY || ''
+
 // OpenAI API Key - Load from environment variable for security
 // Set VITE_OPENAI_API_KEY in your .env file
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || ''
 
-// Check if API key is configured
+// Check if API keys are configured
+if (!OCR_SPACE_API_KEY && import.meta.env.PROD) {
+  console.warn('OCR.space API key not configured. OCR extraction may fail.')
+}
 if (!OPENAI_API_KEY && import.meta.env.PROD) {
   console.warn('OpenAI API key not configured. OCR extraction may fail.')
 }
 
 /**
- * Preprocess image for better OCR accuracy
- * Enhances contrast, converts to grayscale, uses adaptive thresholding
+ * Convert base64 image to Blob for OCR.space API
  */
-const preprocessImage = (imageData: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Canvas context not available'))
-        return
-      }
-
-      // Scale up for better OCR (optimized: max 1000px width for faster processing)
-      const maxWidth = 1000
-      const scale = img.width < maxWidth ? Math.max(maxWidth / img.width, 1) : 1
-      // Limit maximum dimensions to prevent excessive processing time
-      const maxDimension = 1500
-      if (img.width * scale > maxDimension || img.height * scale > maxDimension) {
-        const scaleFactor = Math.min(maxDimension / img.width, maxDimension / img.height)
-        canvas.width = img.width * scaleFactor
-        canvas.height = img.height * scaleFactor
-      } else {
-        canvas.width = img.width * scale
-        canvas.height = img.height * scale
-      }
-
-      // Draw original image scaled up
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-      // Get image data for processing
-      const imageDataObj = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const data = imageDataObj.data
-
-      // First pass: Convert to grayscale
-      const grayscale: number[] = []
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i]
-        const g = data[i + 1]
-        const b = data[i + 2]
-        const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b)
-        grayscale.push(gray)
-      }
-
-      // Second pass: Adaptive thresholding (better than simple threshold)
-      // Calculate local average for each pixel
-      const windowSize = 15
-      for (let i = 0; i < data.length; i += 4) {
-        const idx = i / 4
-        const row = Math.floor(idx / canvas.width)
-        const col = idx % canvas.width
-
-        // Calculate local average
-        let sum = 0
-        let count = 0
-        for (let dy = -Math.floor(windowSize / 2); dy <= Math.floor(windowSize / 2); dy++) {
-          for (let dx = -Math.floor(windowSize / 2); dx <= Math.floor(windowSize / 2); dx++) {
-            const y = row + dy
-            const x = col + dx
-            if (y >= 0 && y < canvas.height && x >= 0 && x < canvas.width) {
-              const localIdx = y * canvas.width + x
-              sum += grayscale[localIdx]
-              count++
-            }
-          }
-        }
-        const avg = sum / count
-        const gray = grayscale[idx]
-
-        // Adaptive threshold: if pixel is darker than local average, make it black, else white
-        const threshold = avg * 0.85 // 85% of local average
-        const final = gray < threshold ? 0 : 255
-
-        // Enhance contrast slightly
-        const contrast = 1.2
-        const adjusted = Math.min(255, Math.max(0, ((final / 255 - 0.5) * contrast + 0.5) * 255))
-
-        data[i] = adjusted     // R
-        data[i + 1] = adjusted // G
-        data[i + 2] = adjusted // B
-        // Alpha remains unchanged (data[i + 3])
-      }
-
-      // Put processed image data back
-      ctx.putImageData(imageDataObj, 0, 0)
-
-      // Convert back to base64
-      const processedImageData = canvas.toDataURL('image/png', 1.0) // Use PNG for better quality
-      resolve(processedImageData)
-    }
-    img.onerror = reject
-    img.src = imageData
-  })
+const base64ToBlob = (base64: string): Blob => {
+  // Remove data URL prefix if present
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64
+  
+  // Convert base64 to binary
+  const byteCharacters = atob(base64Data)
+  const byteNumbers = new Array(byteCharacters.length)
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  }
+  const byteArray = new Uint8Array(byteNumbers)
+  
+  // Determine MIME type from base64 string
+  let mimeType = 'image/png'
+  if (base64.includes('data:image/jpeg')) mimeType = 'image/jpeg'
+  if (base64.includes('data:image/jpg')) mimeType = 'image/jpeg'
+  if (base64.includes('data:image/png')) mimeType = 'image/png'
+  
+  return new Blob([byteArray], { type: mimeType })
 }
 
 /**
- * Extract text from an image using OCR with enhanced preprocessing
+ * Extract text from an image using OCR.space API
  * @param imageData - Base64 image data or image URL
  * @returns Extracted text and parsed fields
  */
 export const extractTextFromImage = async (imageData: string): Promise<OCRResult> => {
   try {
-    console.log('Starting OCR with image preprocessing...')
-    
-    // Preprocess image for better OCR accuracy
-    const processedImage = await preprocessImage(imageData)
-    console.log('Image preprocessing complete')
+    if (!OCR_SPACE_API_KEY || OCR_SPACE_API_KEY.trim() === '') {
+      throw new Error('OCR.space API key is not configured. Please set VITE_OCR_SPACE_API_KEY in your .env file.')
+    }
 
-    // Initialize Tesseract worker with optimized configuration
-    // Use LSTM engine (mode 1) which is faster and still accurate
-    const worker = await Tesseract.createWorker('eng', 1, {
-      logger: (m) => {
-        // Log progress only every 20% to reduce console spam
-        if (m.status === 'recognizing text') {
-          const progress = Math.round(m.progress * 100)
-          // Only log at 0%, 20%, 40%, 60%, 80%, 100%
-          if (progress === 0 || progress % 20 === 0 || progress === 100) {
-            console.log(`OCR Progress: ${progress}%`)
-          }
-        }
+    console.log('Starting OCR with OCR.space API...')
+    
+    // Convert base64 to Blob for FormData
+    const imageBlob = base64ToBlob(imageData)
+    
+    // Create FormData
+    const formData = new FormData()
+    formData.append('file', imageBlob, 'image.png')
+    formData.append('language', 'eng') // English
+    formData.append('isOverlayRequired', 'false')
+    formData.append('detectOrientation', 'true')
+    formData.append('scale', 'true')
+    formData.append('OCREngine', '2') // OCR Engine 2 for better accuracy
+
+    // Send request to OCR.space API
+    const response = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST',
+      headers: {
+        'apikey': OCR_SPACE_API_KEY,
       },
+      body: formData,
     })
 
-    // Set OCR parameters (tessedit_ocr_engine_mode must be set during initialization, not here)
-    await worker.setParameters({
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
-      tessedit_pageseg_mode: 6 as any, // Assume a single uniform block of text (faster)
-      preserve_interword_spaces: '1',
-    })
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`OCR.space API error: ${response.status} - ${errorText}`)
+    }
 
-    // Perform OCR on preprocessed image
-    const { data: { text, confidence } } = await worker.recognize(processedImage, {
-      rectangle: undefined, // Process entire image
-    })
+    const result = await response.json()
     
-    console.log(`OCR Confidence: ${confidence}%`)
+    // Check if OCR was successful
+    if (result.OCRExitCode !== 1 && result.OCRExitCode !== 2) {
+      throw new Error(`OCR.space API returned error code: ${result.OCRExitCode}`)
+    }
+
+    // Extract text from all parsed results
+    let finalText = ''
+    let confidence = 0
     
-    // Terminate worker
-    await worker.terminate()
-
-    // Use first result - skip second attempt for speed (OpenAI will handle extraction)
-    // Only retry if confidence is very low (< 30%) and we got no text
-    let finalText = text
-    let finalConfidence = confidence
-
-    if (confidence < 30 && (!text || text.trim().length < 10)) {
-      console.log('Very low confidence with minimal text, trying alternative OCR mode...')
-      const worker2 = await Tesseract.createWorker('eng', 1, {
-        logger: () => {}, // Silent for second attempt
-      })
-
-      await worker2.setParameters({
-        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/: ',
-        tessedit_pageseg_mode: 11 as any, // Sparse text (find as much text as possible in no particular order)
-        preserve_interword_spaces: '1',
-      })
-
-      const { data: { text: text2, confidence: confidence2 } } = await worker2.recognize(processedImage)
-      await worker2.terminate()
-
-      // Use the result with higher confidence or more text
-      if (confidence2 > confidence || (text2 && text2.trim().length > text.trim().length)) {
-        finalText = text2
-        finalConfidence = confidence2
-        console.log(`Using alternative OCR mode, confidence: ${finalConfidence}%`)
+    if (result.ParsedResults && result.ParsedResults.length > 0) {
+      // Combine all parsed text
+      finalText = result.ParsedResults
+        .map((parsed: any) => parsed.ParsedText || '')
+        .join('\n')
+        .trim()
+      
+      // Calculate average confidence if available
+      const confidences = result.ParsedResults
+        .map((parsed: any) => parsed.TextOverlay?.MeanConfidence || 0)
+        .filter((conf: number) => conf > 0)
+      
+      if (confidences.length > 0) {
+        confidence = confidences.reduce((a: number, b: number) => a + b, 0) / confidences.length
+      } else {
+        // Default confidence if not provided (OCR.space doesn't always provide it)
+        confidence = 80
       }
     }
 
-    // Send raw OCR text to OpenAI for intelligent extraction
-    console.log('Sending raw OCR text to OpenAI for extraction...')
-    let parsed: Partial<OCRResult> = {}
-    
-    try {
-      parsed = await extractWithOpenAI(finalText)
-      console.log('OpenAI extraction successful:', parsed)
-    } catch (openAIError) {
-      console.warn('OpenAI extraction failed, falling back to local parsing:', openAIError)
-      // Fallback to local parsing if OpenAI fails
-      parsed = parseOCRText(finalText)
+    // Also check TextOverlay for additional text
+    if (result.ParsedResults && result.ParsedResults.length > 0) {
+      const textOverlay = result.ParsedResults[0].TextOverlay
+      if (textOverlay && textOverlay.Lines) {
+        const overlayText = textOverlay.Lines
+          .map((line: any) => line.LineText || '')
+          .join('\n')
+          .trim()
+        
+        // Use overlay text if parsed text is empty or combine them
+        if (!finalText || finalText.length < 10) {
+          finalText = overlayText || finalText
+        }
+      }
     }
+
+    if (!finalText || finalText.trim().length === 0) {
+      throw new Error('No text extracted from image')
+    }
+
+    console.log(`OCR.space extraction complete. Text length: ${finalText.length} characters`)
+    console.log(`Estimated confidence: ${Math.round(confidence)}%`)
+
+    // Use local parsing directly from OCR.space raw text (OpenAI code commented out)
+    console.log('Parsing OCR text locally...')
+    const parsed = parseOCRText(finalText)
+    console.log('Local parsing successful:', parsed)
+
+    // OpenAI API code commented out - using only OCR.space raw data
+    // // Send raw OCR text to OpenAI for intelligent extraction
+    // console.log('Sending raw OCR text to OpenAI for extraction...')
+    // let parsed: Partial<OCRResult> = {}
+    // 
+    // try {
+    //   parsed = await extractWithOpenAI(finalText)
+    //   console.log('OpenAI extraction successful:', parsed)
+    // } catch (openAIError) {
+    //   console.warn('OpenAI extraction failed, falling back to local parsing:', openAIError)
+    //   // Fallback to local parsing if OpenAI fails
+    //   parsed = parseOCRText(finalText)
+    // }
 
     return {
       ...parsed,
       rawText: finalText,
-      confidence: finalConfidence,
+      confidence: Math.round(confidence),
     }
   } catch (error) {
     console.error('OCR Error:', error)
-    throw new Error('Failed to extract text from image')
+    throw new Error(`Failed to extract text from image: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
 /**
  * Extract structured data from OCR text using OpenAI API
  * Sends raw text to ChatGPT for intelligent parsing
+ * 
+ * COMMENTED OUT: Using only OCR.space raw data with local parsing instead
  */
+/*
 const extractWithOpenAI = async (rawText: string): Promise<Partial<OCRResult>> => {
   if (!OPENAI_API_KEY || OPENAI_API_KEY.trim() === '') {
     throw new Error('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your .env file.')
@@ -235,9 +196,15 @@ const extractWithOpenAI = async (rawText: string): Promise<Partial<OCRResult>> =
             role: 'system',
             content: `You are an expert at extracting information from Pakistani National Identity Card (CNIC) OCR text. 
 Extract the following information from the raw OCR text:
-1. First Name (Full Name) - The person's complete name
-2. Father Name - The father's name (often appears after S/O, D/O, or "Father" label)
-3. CNIC Number - Pakistani CNIC in format XXXXX-XXXXXXX-X (13 digits total)
+1. First Name (Full Name) - The person's complete name, usually after "Name" label
+2. Father Name - The father's name that appears after "Father Name" label, or after S/O (Son Of), D/O (Daughter Of)
+3. CNIC Number - Pakistani CNIC in format XXXXX-XXXXXXX-X (13 digits total), usually after "Identity Number" label
+
+IMPORTANT: Look for these specific patterns:
+- "Name" followed by the person's name on the next line
+- "Father Name" followed by the father's name on the next line (common pattern)
+- Or "S/O" or "D/O" followed by the father's name
+- "Identity Number" followed by the CNIC number
 
 Return ONLY a valid JSON object with these exact keys: fullName, fatherName, cnicNumber
 If any field is not found, set it to null.
@@ -309,6 +276,7 @@ Format names in Title Case (e.g., "Muhammad Ali Khan" not "MUHAMMAD ALI KHAN").`
     throw error
   }
 }
+*/
 
 /**
  * Parse OCR text to extract structured data (Fallback method)
@@ -320,13 +288,13 @@ const parseOCRText = (text: string): Partial<OCRResult> => {
   // Log raw text for debugging
   console.log('Raw OCR text:', text)
   
-  // Normalize text: replace multiple spaces, handle OCR errors (but be careful!)
+  // Store original text (preserve newlines for pattern matching)
+  const originalText = text
+  
+  // Normalize text: replace multiple spaces, but preserve newlines for now
   let cleanText = text
-    .replace(/\s+/g, ' ') // Multiple spaces to single
+    .replace(/[ \t]+/g, ' ') // Multiple spaces/tabs to single (but keep newlines)
     .trim()
-
-  // Store original for CNIC extraction (don't corrupt numbers)
-  const originalText = cleanText
 
   // Only fix common OCR errors in name context (not in numbers)
   // Don't replace globally - this was corrupting names
@@ -373,181 +341,58 @@ const parseOCRText = (text: string): Partial<OCRResult> => {
     }
   }
 
-  // Extract Name - Multiple strategies
-  const excludedWords = ['CNIC', 'ID', 'CARD', 'PAKISTAN', 'ISLAMIC', 'REPUBLIC', 'NAME', 'نام', 'NIC', 'IDENTITY', 'NATIONAL', 'ISLAMIC REPUBLIC']
-  
-  // Strategy 1: Look for "Name" label followed by name (Pakistani ID format)
-  // Names are typically in uppercase or title case on Pakistani ID cards
-  const nameLabelPatterns = [
-    // Pattern: "Name" followed by name (could be on same line or next line)
-    /Name\s*[:]?\s*([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})/i,
-    // Pattern: Name at start of line (very common on Pakistani IDs)
-    /(?:^|\n)\s*([A-Z]{2,}(?:\s+[A-Z]{2,}){1,3})\s*(?:\n|$|Identity|Father|Gender|Country)/i,
-    // Pattern: After "PAKISTAN" or "National Identity Card"
-    /(?:PAKISTAN|National Identity Card|ISLAMIC REPUBLIC)[\s\S]{0,100}Name\s*[:]?\s*([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})/i,
-  ]
-
-  for (const pattern of nameLabelPatterns) {
-    const match = cleanText.match(pattern)
-    if (match && match[1]) {
-      let name = match[1].trim()
-      // Remove any trailing punctuation or labels
+  // Extract Name - Simple: Find "Name" label and get only the first line after it
+  // OCR.space API returns structured data, so we can rely on the format
+  const nameMatch = text.match(/(?:^|\n)\s*Name\s*\n+\s*([^\n]+)/i)
+  if (nameMatch && nameMatch[1]) {
+    // Verify this is NOT "Father Name" by checking what comes before
+    const matchIndex = nameMatch.index !== undefined ? nameMatch.index : text.indexOf(nameMatch[0])
+    const textBeforeMatch = text.substring(Math.max(0, matchIndex - 10), matchIndex).toLowerCase()
+    
+    if (!textBeforeMatch.includes('father')) {
+      let name = nameMatch[1].trim()
+      // Take only the first line (in case there are multiple lines)
+      name = name.split('\n')[0].trim()
+      // Remove trailing punctuation
       name = name.replace(/[:\.,;]+$/, '').trim()
       
+      // Simple validation: at least 2 words, reasonable length
       const nameParts = name.split(/\s+/).filter(part => part.length > 1)
-      if (nameParts.length >= 2 && nameParts.length <= 5) {
-        const isValid = !nameParts.some(part => {
-          const partUpper = part.toUpperCase()
-          return excludedWords.some(excluded => partUpper.includes(excluded)) ||
-                 /^\d+$/.test(part) || // Numbers only
-                 partUpper === 'M' || partUpper === 'F' || // Gender markers
-                 part.includes('-') && /\d/.test(part) // CNIC-like
-        })
-        
-        if (isValid && name.length > 4 && name.length < 50) {
-          // Capitalize first letter of each word properly
-          result.fullName = nameParts.map(part => {
-            if (part === part.toUpperCase() && part.length > 2) {
-              // If all uppercase (like "HAIDER"), convert to title case
-              return part.charAt(0) + part.slice(1).toLowerCase()
-            }
-            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-          }).join(' ')
-          
-          console.log('Extracted name from label:', result.fullName)
-          break
-        }
-      }
-    }
-  }
-
-  // Strategy 2: Look for title case names (First Name Last Name) - more reliable
-  if (!result.fullName) {
-    const titleCasePattern = /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/g
-    const matches = [...cleanText.matchAll(titleCasePattern)]
-    
-    for (const match of matches) {
-      if (match[1]) {
-        const name = match[1].trim()
-        const nameParts = name.split(/\s+/)
-        
-        if (nameParts.length >= 2 && nameParts.length <= 5) {
-          const isValid = !nameParts.some(part => {
-            const partUpper = part.toUpperCase()
-            return excludedWords.some(excluded => partUpper.includes(excluded)) ||
-                   /^\d+$/.test(part) ||
-                   partUpper === 'M' || partUpper === 'F'
-          })
-          
-          // Check position - name should appear before CNIC in Pakistani IDs
-          const nameIndex = cleanText.indexOf(name)
-          const cnicIndex = result.cnicNumber ? cleanText.indexOf(result.cnicNumber) : -1
-          
-          if (isValid && name.length > 5 && name.length < 50) {
-            // Name should be before CNIC number on the card
-            if (cnicIndex === -1 || nameIndex < cnicIndex) {
-              result.fullName = name
-              console.log('Extracted name from title case:', result.fullName)
-              break
-            }
+      if (nameParts.length >= 2 && nameParts.length <= 5 && name.length > 4 && name.length < 50) {
+        // Capitalize properly - Title Case
+        result.fullName = nameParts.map(part => {
+          if (part === part.toUpperCase() && part.length > 2) {
+            return part.charAt(0) + part.slice(1).toLowerCase()
           }
-        }
-      }
-    }
-  }
-
-  // Strategy 3: Look for uppercase words (common in ID cards) that form a name
-  if (!result.fullName) {
-    // Find sequences of 2-5 uppercase words that are likely names
-    // But be more careful - names usually appear before other data
-    const uppercasePattern = /\b([A-Z]{2,}(?:\s+[A-Z]{2,}){1,4})\b/g
-    const matches = [...cleanText.matchAll(uppercasePattern)]
-    
-    // Filter matches that appear early in the text (names are usually at top)
-    const earlyMatches = matches.filter(match => {
-      const matchIndex = cleanText.indexOf(match[1])
-      return matchIndex < cleanText.length * 0.4 // First 40% of text
-    })
-    
-    for (const match of earlyMatches) {
-      if (match[1]) {
-        const name = match[1].trim()
-        const nameParts = name.split(/\s+/).filter(part => part.length > 1)
-        
-        if (nameParts.length >= 2 && nameParts.length <= 5) {
-          const isValid = !nameParts.some(part => {
-            const partUpper = part.toUpperCase()
-            return excludedWords.some(excluded => partUpper.includes(excluded)) ||
-                   /^\d+$/.test(part) ||
-                   partUpper === 'M' || partUpper === 'F' ||
-                   (part.includes('-') && /\d/.test(part))
-          })
-          
-          if (isValid && name.length > 5 && name.length < 50) {
-            // Check position relative to CNIC
-            const nameIndex = cleanText.indexOf(name)
-            const cnicIndex = result.cnicNumber ? cleanText.indexOf(result.cnicNumber) : -1
-            if (cnicIndex === -1 || nameIndex < cnicIndex) {
-              // Convert to title case
-              result.fullName = nameParts.map(part => {
-                return part.charAt(0) + part.slice(1).toLowerCase()
-              }).join(' ')
-              
-              console.log('Extracted name from uppercase pattern:', result.fullName)
-              break
-            }
-          }
-        }
+          return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+        }).join(' ')
+        console.log('Extracted name:', result.fullName)
       }
     }
   }
 
 
-  // Extract Father's Name - Look for S/O, D/O, C/O, Father patterns
-  const fatherPatterns = [
-    // S/O (Son Of) pattern - most common on Pakistani IDs
-    /\bS\s*\/\s*O\s*[:]?\s*([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})/i,
-    // D/O (Daughter Of) pattern
-    /\bD\s*\/\s*O\s*[:]?\s*([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})/i,
-    // Father label pattern
-    /Father\s*[:]?\s*([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})/i,
-    // After name, look for S/O pattern
-    new RegExp(`(${result.fullName || '[A-Za-z]+'})\\s+S\\s*/\\s*O\\s*[:]?\\s*([A-Z][A-Za-z]+(?:\\s+[A-Z][A-Za-z]+){0,3})`, 'i'),
-  ]
 
-  for (const pattern of fatherPatterns) {
-    const match = cleanText.match(pattern)
-    if (match) {
-      // Get the father name (could be in different capture groups)
-      let fatherName = match[match.length - 1]?.trim() || match[1]?.trim()
-      
-      if (fatherName) {
-        // Remove any trailing punctuation
-        fatherName = fatherName.replace(/[:\.,;]+$/, '').trim()
-        const nameParts = fatherName.split(/\s+/).filter(part => part.length > 1)
-        
-        if (nameParts.length >= 2 && nameParts.length <= 5) {
-          const isValid = !nameParts.some(part => {
-            const partUpper = part.toUpperCase()
-            return excludedWords.some(excluded => partUpper.includes(excluded)) ||
-                   /^\d+$/.test(part) ||
-                   partUpper === 'M' || partUpper === 'F'
-          })
-          
-          if (isValid && fatherName.length > 5 && fatherName !== result.fullName) {
-            // Capitalize properly
-            result.fatherName = nameParts.map(part => {
-              if (part === part.toUpperCase() && part.length > 2) {
-                return part.charAt(0) + part.slice(1).toLowerCase()
-              }
-              return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-            }).join(' ')
-            
-            console.log('Extracted father name:', result.fatherName)
-            break
-          }
+  // Extract Father's Name - Simple: Find "Father Name" label and get the text on the very next line
+  // OCR.space API returns structured data, so we can rely on the format
+  const fatherNameMatch = text.match(/(?:^|\n)\s*Father\s+Name\s*\n+\s*([^\n]+)/i)
+  if (fatherNameMatch && fatherNameMatch[1]) {
+    let fatherName = fatherNameMatch[1].trim()
+    // Clean up the name - remove any trailing labels or numbers, take only first line
+    fatherName = fatherName.split('\n')[0].trim()
+    fatherName = fatherName.replace(/[:\.,;]+$/, '').trim()
+    
+    // Simple validation: at least 2 words, reasonable length
+    const nameParts = fatherName.split(/\s+/).filter(part => part.length > 1)
+    if (nameParts.length >= 2 && nameParts.length <= 5 && fatherName.length > 5 && fatherName !== result.fullName) {
+      // Capitalize properly - Title Case
+      result.fatherName = nameParts.map(part => {
+        if (part === part.toUpperCase() && part.length > 2) {
+          return part.charAt(0) + part.slice(1).toLowerCase()
         }
-      }
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+      }).join(' ')
+      console.log('Extracted father name:', result.fatherName)
     }
   }
 

@@ -41,6 +41,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
   const [showOcrResults, setShowOcrResults] = useState(false)
   const [ocrRawText, setOcrRawText] = useState('')
   const [ocrConfidence, setOcrConfidence] = useState<number | undefined>()
+  const [ocrFilledFields, setOcrFilledFields] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const loadData = async () => {
@@ -286,12 +287,24 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
                         setOcrConfidence(ocrResult.confidence)
                         
                         // Update form with OCR results
-                        setFormData(prev => ({
-                          ...prev,
-                          fullName: ocrResult.fullName || prev.fullName,
-                          fatherName: ocrResult.fatherName || prev.fatherName,
-                          cnicNumber: ocrResult.cnicNumber || prev.cnicNumber,
-                        }))
+                        const filledFields = new Set<string>()
+                        setFormData(prev => {
+                          const updated = { ...prev }
+                          if (ocrResult.fullName) {
+                            updated.fullName = ocrResult.fullName
+                            filledFields.add('fullName')
+                          }
+                          if (ocrResult.fatherName) {
+                            updated.fatherName = ocrResult.fatherName
+                            filledFields.add('fatherName')
+                          }
+                          if (ocrResult.cnicNumber) {
+                            updated.cnicNumber = ocrResult.cnicNumber
+                            filledFields.add('cnicNumber')
+                          }
+                          return updated
+                        })
+                        setOcrFilledFields(filledFields)
                         
                         // Check if guest already exists (if CNIC was extracted)
                         if (ocrResult.cnicNumber) {
@@ -336,7 +349,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-800 to-neutral-900 p-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <button
@@ -346,7 +359,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
             <ArrowLeftIcon className="w-5 h-5" />
             Back to Scan
           </button>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Check In - Visitor Details</h2>
+          <h2 className="text-2xl font-bold text-neutral-100 mb-2">Check In - Visitor Details</h2>
           {existingGuest && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
               Returning visitor found. Details pre-filled.
@@ -354,7 +367,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-neutral-700 rounded-xl shadow-lg p-6 space-y-6">
           {/* OCR Confidence and Raw Text Display */}
           {showOcrResults && ocrRawText && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -386,41 +399,74 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-200 mb-2">
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                onChange={(e) => {
+                  handleInputChange('fullName', e.target.value)
+                  setOcrFilledFields(prev => {
+                    const next = new Set(prev)
+                    if (!e.target.value) next.delete('fullName')
+                    return next
+                  })
+                }}
                 required
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                  ocrFilledFields.has('fullName') 
+                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-200 mb-2">
                 Father Name
               </label>
               <input
                 type="text"
                 value={formData.fatherName}
-                onChange={(e) => handleInputChange('fatherName', e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                onChange={(e) => {
+                  handleInputChange('fatherName', e.target.value)
+                  setOcrFilledFields(prev => {
+                    const next = new Set(prev)
+                    if (!e.target.value) next.delete('fatherName')
+                    return next
+                  })
+                }}
+                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                  ocrFilledFields.has('fatherName') 
+                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
+                }`}
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-200 mb-2">
                 CNIC Number
               </label>
               <input
                 type="text"
                 value={formData.cnicNumber}
-                onChange={(e) => handleInputChange('cnicNumber', e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                onChange={(e) => {
+                  handleInputChange('cnicNumber', e.target.value)
+                  setOcrFilledFields(prev => {
+                    const next = new Set(prev)
+                    if (!e.target.value) next.delete('cnicNumber')
+                    return next
+                  })
+                }}
+                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                  ocrFilledFields.has('cnicNumber') 
+                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
+                }`}
                 placeholder="35202-1234567-1"
               />
             </div>

@@ -42,6 +42,7 @@ export default function EnrollRoute(): JSX.Element {
   const [existingGuest, setExistingGuest] = useState<Guest | null>(null)
   const [ocrRawText, setOcrRawText] = useState('')
   const [ocrConfidence, setOcrConfidence] = useState<number | undefined>()
+  const [ocrFilledFields, setOcrFilledFields] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const loadData = async () => {
@@ -242,13 +243,13 @@ export default function EnrollRoute(): JSX.Element {
               setMode('new')
               setStep('scan')
             }}
-            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
           >
             New Visitor
           </button>
           <button
             onClick={() => setMode('exit')}
-            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
           >
             Exit
           </button>
@@ -314,7 +315,7 @@ export default function EnrollRoute(): JSX.Element {
         <div className="grid grid-cols-3 gap-4 mb-4">
           <button
             onClick={() => setMode('lookup')}
-            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
           >
             Lookup
           </button>
@@ -329,18 +330,18 @@ export default function EnrollRoute(): JSX.Element {
           </button>
           <button
             onClick={() => setMode('exit')}
-            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+            className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
           >
             Exit
           </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-neutral-700 rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">Enroll - Scan ID Card</h2>
           <p className="text-neutral-600">Please scan or upload the visitor's ID card</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-neutral-700 rounded-xl shadow-lg p-6">
           {errorMessage && (
             <div className="mb-4 flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <XCircleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0" />
@@ -388,12 +389,24 @@ export default function EnrollRoute(): JSX.Element {
                       setOcrRawText(ocrResult.rawText)
                       setOcrConfidence(ocrResult.confidence)
                       
-                      setFormData(prev => ({
-                        ...prev,
-                        fullName: ocrResult.fullName || prev.fullName,
-                        fatherName: ocrResult.fatherName || prev.fatherName,
-                        cnicNumber: ocrResult.cnicNumber || prev.cnicNumber,
-                      }))
+                      const filledFields = new Set<string>()
+                      setFormData(prev => {
+                        const updated = { ...prev }
+                        if (ocrResult.fullName) {
+                          updated.fullName = ocrResult.fullName
+                          filledFields.add('fullName')
+                        }
+                        if (ocrResult.fatherName) {
+                          updated.fatherName = ocrResult.fatherName
+                          filledFields.add('fatherName')
+                        }
+                        if (ocrResult.cnicNumber) {
+                          updated.cnicNumber = ocrResult.cnicNumber
+                          filledFields.add('cnicNumber')
+                        }
+                        return updated
+                      })
+                      setOcrFilledFields(filledFields)
                       
                       if (ocrResult.cnicNumber) {
                         await checkExistingGuest(ocrResult.cnicNumber)
@@ -429,14 +442,14 @@ export default function EnrollRoute(): JSX.Element {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4">
+    <div className="max-w-6xl mx-auto space-y-4 bg-neutral-800 min-h-screen p-6">
       <h1 className="text-2xl font-bold text-neutral-900">Counter Enrollment</h1>
       
       {/* Large Mode Buttons */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         <button
           onClick={() => setMode('lookup')}
-          className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+          className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
         >
           Lookup
         </button>
@@ -451,13 +464,13 @@ export default function EnrollRoute(): JSX.Element {
         </button>
         <button
           onClick={() => setMode('exit')}
-          className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-white text-neutral-700 border-2 border-neutral-200 hover:border-blue-300"
+          className="px-6 py-4 rounded-xl text-base font-semibold transition-all bg-neutral-700 text-neutral-100 border-2 border-neutral-600 hover:border-blue-400"
         >
           Exit
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg p-6">
+      <div className="bg-neutral-700 rounded-xl shadow-lg p-6">
         <button
           onClick={() => setStep('scan')}
           className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
@@ -465,7 +478,7 @@ export default function EnrollRoute(): JSX.Element {
           <ArrowLeftIcon className="w-5 h-5" />
           Back to Scan
         </button>
-        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Enroll - Visitor Details</h2>
+        <h2 className="text-2xl font-bold text-neutral-100 mb-2">Enroll - Visitor Details</h2>
         {existingGuest && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
             Returning visitor found. Details pre-filled.
@@ -473,50 +486,83 @@ export default function EnrollRoute(): JSX.Element {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-neutral-700 rounded-xl shadow-lg p-6 space-y-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               Full Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={formData.fullName}
-              onChange={(e) => handleInputChange('fullName', e.target.value)}
+              onChange={(e) => {
+                handleInputChange('fullName', e.target.value)
+                setOcrFilledFields(prev => {
+                  const next = new Set(prev)
+                  if (!e.target.value) next.delete('fullName')
+                  return next
+                })
+              }}
               required
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+              className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                ocrFilledFields.has('fullName') 
+                  ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                  : 'border-neutral-300'
+              }`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               Father Name
             </label>
             <input
               type="text"
               value={formData.fatherName}
-              onChange={(e) => handleInputChange('fatherName', e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+              onChange={(e) => {
+                handleInputChange('fatherName', e.target.value)
+                setOcrFilledFields(prev => {
+                  const next = new Set(prev)
+                  if (!e.target.value) next.delete('fatherName')
+                  return next
+                })
+              }}
+              className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                ocrFilledFields.has('fatherName') 
+                  ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                  : 'border-neutral-300'
+              }`}
             />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               CNIC Number
             </label>
             <input
               type="text"
               value={formData.cnicNumber}
-              onChange={(e) => handleInputChange('cnicNumber', e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+              onChange={(e) => {
+                handleInputChange('cnicNumber', e.target.value)
+                setOcrFilledFields(prev => {
+                  const next = new Set(prev)
+                  if (!e.target.value) next.delete('cnicNumber')
+                  return next
+                })
+              }}
+              className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
+                ocrFilledFields.has('cnicNumber') 
+                  ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
+                  : 'border-neutral-300'
+              }`}
               placeholder="35202-1234567-1"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               Phone Number <span className="text-red-500">*</span>
             </label>
             <input
@@ -545,7 +591,7 @@ export default function EnrollRoute(): JSX.Element {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               Visitor Type <span className="text-red-500">*</span>
             </label>
             <select
@@ -564,7 +610,7 @@ export default function EnrollRoute(): JSX.Element {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <label className="block text-sm font-medium text-neutral-200 mb-2">
               Destination <span className="text-red-500">*</span>
             </label>
             <select

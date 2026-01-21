@@ -83,4 +83,22 @@ export const ADMIN_ENDPOINTS = {
   CREATE_GUARD: '/Admin/CreateGuard/Guard',
   UPDATE_GUARD: '/Admin/UpdateGuard/Guard/{id}',
   DELETE_GUARD: '/Admin/DeleteGuard/Guard/{id}',
+  // Faculty endpoints
+  GET_FACULTIES: '/Admin/GetFaculties',
+  GET_FACULTY_BY_ID: '/Admin/GetFacultyById/Faculty/{id}',
+  CREATE_FACULTY: '/Admin/CreateFaculty/Faculty',
+  UPDATE_FACULTY: '/Admin/UpdateFaculty/Faculty/{id}',
+  DELETE_FACULTY: '/Admin/DeleteFaculty/Faculty/{id}',
+  // Scheduled Guest endpoints
+  GET_SCHEDULED_GUESTS: '/ScheduledGuests/GetScheduledGuests',
+  GET_SCHEDULED_GUEST_BY_ID: '/ScheduledGuests/GetScheduledGuestById/{id}',
+  GET_SCHEDULED_GUESTS_BY_FACULTY: '/ScheduledGuests/GetScheduledGuestsByFaculty/{facultyId}',
+  GET_APPROVED_SCHEDULED_GUESTS: '/ScheduledGuests/GetApprovedScheduledGuests',
+  CREATE_SCHEDULED_GUEST: '/ScheduledGuests/CreateScheduledGuest',
+  UPDATE_SCHEDULED_GUEST: '/ScheduledGuests/UpdateScheduledGuest/{id}',
+  APPROVE_SCHEDULED_GUEST: '/ScheduledGuests/ApproveScheduledGuest/{id}',
+  REJECT_SCHEDULED_GUEST: '/ScheduledGuests/RejectScheduledGuest/{id}',
+  MARK_SCHEDULED_GUEST_ARRIVED: '/ScheduledGuests/MarkArrived/{id}',
+  MARK_SCHEDULED_GUEST_NO_SHOW: '/ScheduledGuests/MarkNoShow/{id}',
+  DELETE_SCHEDULED_GUEST: '/ScheduledGuests/DeleteScheduledGuest/{id}',
 } as const

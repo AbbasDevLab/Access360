@@ -8,10 +8,14 @@ import {
   ClockIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline'
+import { getAllScheduledGuests, type ScheduledGuest } from '../services/scheduledGuestsApi'
 
 export default function HomeRoute(): JSX.Element {
   const navigate = useNavigate()
   const [adminUser, setAdminUser] = useState<any>(null)
+  const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false)
+  const [requestsError, setRequestsError] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('adminUser')
@@ -27,13 +31,32 @@ export default function HomeRoute(): JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    const loadRequests = async () => {
+      if (!adminUser) return
+      setIsLoadingRequests(true)
+      setRequestsError(null)
+      try {
+        const guests = await getAllScheduledGuests()
+        setScheduledGuests(guests)
+      } catch (error: any) {
+        setRequestsError(error?.message || 'Failed to load scheduled guest requests')
+      } finally {
+        setIsLoadingRequests(false)
+      }
+    }
+    loadRequests()
+  }, [adminUser])
+
+  const pendingRequests = scheduledGuests.filter(g => g.status === 'Pending')
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {!adminUser && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm text-blue-800 font-medium">Admin access required for most features</p>
-            <p className="text-xs text-blue-600 mt-1">Please login to access enrollment, reports, and management features</p>
+            <p className="text-sm text-neutral-100 font-medium">Admin access required for most features</p>
+            <p className="text-xs text-neutral-400 mt-1">Please login to access enrollment, reports, and management features</p>
           </div>
           <button
             onClick={() => navigate('/login')}
@@ -45,68 +68,62 @@ export default function HomeRoute(): JSX.Element {
       )}
       {/* Hero Section */}
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center gap-3 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-medium">
+        <div className="inline-flex items-center gap-3 bg-blue-500/20 text-blue-200 px-4 py-2 rounded-full text-sm font-medium">
           <ShieldCheckIcon className="w-5 h-5" />
           AI-Powered Visitor Management
         </div>
-        <h1 className="text-4xl font-bold tracking-tight text-neutral-900">
-          Welcome to <span className="text-blue-600">Access360</span>
+        <h1 className="text-4xl font-bold tracking-tight text-neutral-100">
+          Welcome to <span className="text-blue-400">Access360</span>
         </h1>
-        <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
+        <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
           Secure, efficient, and auditable visitor management system for Forman Christian College University
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-              <UserPlusIcon className="w-6 h-6 text-white" />
+      {/* Faculty Guest Requests (Admin Home) */}
+      {adminUser && (
+        <div className="bg-neutral-800 rounded-2xl border border-neutral-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <DocumentTextIcon className="w-5 h-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-neutral-100">Faculty Guest Requests</h2>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-900">42</div>
-              <div className="text-sm text-blue-700">Active Visitors</div>
-            </div>
+            <button
+              onClick={() => navigate('/admin')}
+              className="text-sm text-blue-300 hover:text-blue-200 font-medium"
+            >
+              Open Admin Panel
+            </button>
           </div>
+
+          {isLoadingRequests ? (
+            <div className="text-sm text-neutral-400">Loading requests...</div>
+          ) : requestsError ? (
+            <div className="text-sm text-red-300">Error: {requestsError}</div>
+          ) : pendingRequests.length === 0 ? (
+            <div className="text-sm text-neutral-400">No pending requests right now.</div>
+          ) : (
+            <div className="space-y-3">
+              {pendingRequests.slice(0, 6).map((guest) => (
+                <div key={guest.idpk} className="border border-blue-400/20 rounded-lg p-3 bg-blue-500/10">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-neutral-100">{guest.guestFullName}</div>
+                    <span className="text-xs text-blue-200 bg-blue-500/20 px-2 py-1 rounded">Pending</span>
+                  </div>
+                  <div className="text-xs text-neutral-300 mt-1 space-y-1">
+                    <div>CNIC: {guest.guestCNIC} • Phone: {guest.guestPhone}</div>
+                    <div>
+                      Date: {new Date(guest.scheduledDate).toLocaleDateString()} • Time: {guest.scheduledTime}
+                    </div>
+                    <div>Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk})</div>
+                    <div>Purpose: {guest.purpose}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        
-        <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-              <ClockIcon className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-900">2.1m</div>
-              <div className="text-sm text-green-700">Avg. Processing</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-              <QrCodeIcon className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-900">1,247</div>
-              <div className="text-sm text-purple-700">Total Visits</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
-              <ShieldCheckIcon className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-amber-900">99.2%</div>
-              <div className="text-sm text-amber-700">Security Score</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Main Actions */}
       <div className="grid md:grid-cols-3 gap-6">
@@ -163,10 +180,10 @@ export default function HomeRoute(): JSX.Element {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-8">
+      <div className="bg-neutral-800 rounded-2xl border border-neutral-700 p-8">
         <div className="flex items-center gap-3 mb-6">
-          <DocumentTextIcon className="w-6 h-6 text-neutral-600" />
-          <h3 className="text-xl font-semibold text-neutral-900">Recent Activity</h3>
+          <DocumentTextIcon className="w-6 h-6 text-neutral-300" />
+          <h3 className="text-xl font-semibold text-neutral-100">Recent Activity</h3>
         </div>
         <div className="space-y-4">
           {[
@@ -175,16 +192,16 @@ export default function HomeRoute(): JSX.Element {
             { action: 'New visitor registered', visitor: 'Muhammad Khan', time: '12 minutes ago', status: 'info' },
             { action: 'Lost card reported', visitor: 'Fatima Ali', time: '1 hour ago', status: 'warning' }
           ].map((activity, index) => (
-            <div key={index} className="flex items-center gap-4 p-4 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors">
+            <div key={index} className="flex items-center gap-4 p-4 rounded-xl bg-neutral-700/60 hover:bg-neutral-700 transition-colors">
               <div className={`w-3 h-3 rounded-full ${
                 activity.status === 'success' ? 'bg-green-500' :
                 activity.status === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
               }`}></div>
               <div className="flex-1">
-                <div className="font-medium text-neutral-900">{activity.action}</div>
-                <div className="text-sm text-neutral-600">{activity.visitor}</div>
+                <div className="font-medium text-neutral-100">{activity.action}</div>
+                <div className="text-sm text-neutral-300">{activity.visitor}</div>
               </div>
-              <div className="text-sm text-neutral-500">{activity.time}</div>
+              <div className="text-sm text-neutral-400">{activity.time}</div>
             </div>
           ))}
         </div>

@@ -17,6 +17,8 @@ import AdminRoute from './routes/AdminRoute'
 import AdminLoginRoute from './routes/AdminLoginRoute'
 import GuardLoginRoute from './routes/GuardLoginRoute'
 import GuardDashboardRoute from './routes/GuardDashboardRoute'
+import FacultyLoginRoute from './routes/FacultyLoginRoute'
+import FacultyDashboardRoute from './routes/FacultyDashboardRoute'
 import ProtectedRoute from './components/ProtectedRoute'
 import { setupI18n } from './i18n'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -47,6 +49,9 @@ const router = createBrowserRouter([
   // Guard routes (standalone, not wrapped in RouterRoot)
   { path: 'guard/login', element: <GuardLoginRoute /> },
   { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
+  // Faculty routes (standalone, not wrapped in RouterRoot)
+  { path: 'faculty/login', element: <FacultyLoginRoute /> },
+  { path: 'faculty/dashboard', element: <FacultyDashboardRoute /> },
 ])
 
 const rootElement = document.getElementById('root')

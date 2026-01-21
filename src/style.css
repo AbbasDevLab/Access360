@@ -8,6 +8,68 @@ html, body, #root {
   height: 100%;
 }
 
+/* Unified portal theme (admin + main app routes) */
+.portal-theme {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.portal-theme .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.portal-theme .border-neutral-200 {
+  border-color: #374151 !important;
+}
+
+.portal-theme .text-neutral-900 {
+  color: #f3f4f6 !important;
+}
+
+.portal-theme .text-neutral-700 {
+  color: #d1d5db !important;
+}
+
+.portal-theme .text-neutral-600 {
+  color: #9ca3af !important;
+}
+
+.portal-theme input,
+.portal-theme select,
+.portal-theme textarea {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+.portal-theme input::placeholder,
+.portal-theme textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.portal-theme table {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+.portal-theme thead {
+  background-color: #111827 !important;
+}
+
+.portal-theme tbody {
+  background-color: #1f2937 !important;
+}
+
+/* Ensure readable text on white fields inside portal theme */
+.portal-theme input.bg-white,
+.portal-theme select.bg-white,
+.portal-theme textarea.bg-white,
+.portal-theme .bg-white input,
+.portal-theme .bg-white select,
+.portal-theme .bg-white textarea {
+  color: #111827 !important;
+}
+
 /* Urdu font styling */
 .font-urdu {
   font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Al Qalam Taj Nastaleeq", "Nafees Web Naskh", "Urdu Typesetting", "Tahoma", "Arial Unicode MS", sans-serif;

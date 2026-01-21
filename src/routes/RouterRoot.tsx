@@ -86,18 +86,18 @@ export default function RouterRoot(): JSX.Element {
   const visibleMenuItems = menuItems.filter(item => !item.requiresAuth || adminUser)
 
   return (
-    <div className="min-h-screen flex bg-neutral-50">
+    <div className="min-h-screen flex portal-theme bg-neutral-900">
       {/* Vertical Sidebar */}
-      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col sticky top-0 h-screen">
+      <aside className="w-64 bg-neutral-800 border-r border-neutral-700 flex flex-col sticky top-0 h-screen">
         {/* Logo */}
-        <div className="p-6 border-b border-neutral-200">
+        <div className="p-6 border-b border-neutral-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">A</span>
             </div>
             <div>
-              <div className="font-bold text-lg tracking-tight text-neutral-900">{t('appName')}</div>
-              <div className="text-xs text-neutral-500">Visitor Management</div>
+              <div className="font-bold text-lg tracking-tight text-neutral-100">{t('appName')}</div>
+              <div className="text-xs text-neutral-400">Visitor Management</div>
             </div>
           </div>
         </div>
@@ -113,8 +113,8 @@ export default function RouterRoot(): JSX.Element {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
-                    : 'text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900'
+                    ? 'bg-blue-500/20 text-blue-200 border-l-4 border-blue-400'
+                    : 'text-neutral-300 hover:bg-neutral-700 hover:text-neutral-100'
                 }`}
               >
                 <Icon className="w-6 h-6" />
@@ -126,14 +126,14 @@ export default function RouterRoot(): JSX.Element {
 
         {/* User Info & Logout */}
         {adminUser && (
-          <div className="p-4 border-t border-neutral-200">
-            <div className="mb-3 p-3 bg-blue-50 rounded-lg">
-              <div className="text-xs text-neutral-500 mb-1">Logged in as</div>
-              <div className="text-sm font-semibold text-neutral-900">{adminUser.userFullName || adminUser.username}</div>
+          <div className="p-4 border-t border-neutral-700">
+            <div className="mb-3 p-3 bg-neutral-700 rounded-lg">
+              <div className="text-xs text-neutral-400 mb-1">Logged in as</div>
+              <div className="text-sm font-semibold text-neutral-100">{adminUser.userFullName || adminUser.username}</div>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-medium transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg text-sm font-medium transition-colors"
             >
               <ArrowRightOnRectangleIcon className="w-4 h-4" />
               Logout
@@ -142,7 +142,7 @@ export default function RouterRoot(): JSX.Element {
         )}
 
         {!adminUser && (
-          <div className="p-4 border-t border-neutral-200">
+          <div className="p-4 border-t border-neutral-700">
             <NavLink
               to="/login"
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
@@ -154,8 +154,8 @@ export default function RouterRoot(): JSX.Element {
         )}
 
         {/* Language Selector */}
-        <div className="p-4 border-t border-neutral-200">
-          <div className="flex items-center gap-2 mb-2 text-sm text-neutral-600">
+        <div className="p-4 border-t border-neutral-700">
+          <div className="flex items-center gap-2 mb-2 text-sm text-neutral-300">
             <LanguageIcon className="w-4 h-4" />
             <span>Language</span>
           </div>
@@ -165,7 +165,7 @@ export default function RouterRoot(): JSX.Element {
               className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 i18next.language === 'en'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  : 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600'
               }`}
             >
               EN
@@ -175,7 +175,7 @@ export default function RouterRoot(): JSX.Element {
               className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 i18next.language === 'ur'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  : 'bg-neutral-700 text-neutral-200 hover:bg-neutral-600'
               }`}
             >
               اردو
@@ -185,7 +185,7 @@ export default function RouterRoot(): JSX.Element {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-neutral-900">
         <div className="p-6">
           <Outlet />
         </div>

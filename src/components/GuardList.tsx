@@ -15,7 +15,7 @@ interface GuardListProps {
 export default function GuardList({
   onEdit,
   onRefresh,
-}: GuardListProps): JSX.Element {
+}: GuardListProps): React.JSX.Element {
   const [guards, setGuards] = useState<Guard[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -203,4 +203,5 @@ export default function GuardList({
     </div>
   )
 }
+
 

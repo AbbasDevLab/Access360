@@ -373,9 +373,9 @@ const parseOCRText = (text: string): Partial<OCRResult> => {
 
 
 
-  // Extract Father's Name - Simple: Find "Father Name" label and get the text on the very next line
+  // Extract Father's/Husband's Name - handle both "Father Name" and "Husband Name" labels
   // OCR.space API returns structured data, so we can rely on the format
-  const fatherNameMatch = text.match(/(?:^|\n)\s*Father\s+Name\s*\n+\s*([^\n]+)/i)
+  const fatherNameMatch = text.match(/(?:^|\n)\s*(?:Father|Husband)(?:'s)?\s+Name\s*\n+\s*([^\n]+)/i)
   if (fatherNameMatch && fatherNameMatch[1]) {
     let fatherName = fatherNameMatch[1].trim()
     // Clean up the name - remove any trailing labels or numbers, take only first line

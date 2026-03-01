@@ -15,7 +15,7 @@ interface GuestListProps {
 export default function GuestList({
   onEdit,
   onRefresh,
-}: GuestListProps): JSX.Element {
+}: GuestListProps): React.JSX.Element {
   const [guests, setGuests] = useState<Guest[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -203,4 +203,5 @@ export default function GuestList({
     </div>
   )
 }
+
 

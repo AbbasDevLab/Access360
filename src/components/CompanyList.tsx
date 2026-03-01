@@ -15,7 +15,7 @@ interface CompanyListProps {
 export default function CompanyList({
   onEdit,
   onRefresh,
-}: CompanyListProps): JSX.Element {
+}: CompanyListProps): React.JSX.Element {
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -191,4 +191,5 @@ export default function CompanyList({
     </div>
   )
 }
+
 

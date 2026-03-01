@@ -424,7 +424,7 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
 
             <div>
               <label className="block text-sm font-medium text-neutral-200 mb-2">
-                Father Name
+                Husband Name / Father Name
               </label>
               <input
                 type="text"

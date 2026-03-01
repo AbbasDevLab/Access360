@@ -11,7 +11,7 @@ interface VisitorTypeFormProps {
 export default function VisitorTypeForm({
   onSuccess,
   onError,
-}: VisitorTypeFormProps): JSX.Element {
+}: VisitorTypeFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<VisitorType>>({
     vTypeName: '',
     vTypeStatus: true,
@@ -157,4 +157,5 @@ export default function VisitorTypeForm({
     </form>
   )
 }
+
 

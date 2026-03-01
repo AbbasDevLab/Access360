@@ -15,7 +15,7 @@ interface LocationListProps {
 export default function LocationList({
   onEdit,
   onRefresh,
-}: LocationListProps): JSX.Element {
+}: LocationListProps): React.JSX.Element {
   const [locations, setLocations] = useState<Location[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -203,4 +203,5 @@ export default function LocationList({
     </div>
   )
 }
+
 

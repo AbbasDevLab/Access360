@@ -15,7 +15,7 @@ interface GuestVisitListProps {
 export default function GuestVisitList({
   onEdit,
   onRefresh,
-}: GuestVisitListProps): JSX.Element {
+}: GuestVisitListProps): React.JSX.Element {
   const [visits, setVisits] = useState<GuestVisit[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -203,4 +203,5 @@ export default function GuestVisitList({
     </div>
   )
 }
+
 

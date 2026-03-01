@@ -25,7 +25,7 @@ interface VerificationResult {
   visit?: GuestVisit
 }
 
-export default function VerifyRoute(): JSX.Element {
+export default function VerifyRoute(): React.JSX.Element {
   const [result, setResult] = useState<string>('')
   const [scanResult, setScanResult] = useState<VerificationResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -394,5 +394,6 @@ export default function VerifyRoute(): JSX.Element {
     </div>
   )
 }
+
 
 

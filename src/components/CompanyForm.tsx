@@ -11,7 +11,7 @@ interface CompanyFormProps {
 export default function CompanyForm({
   onSuccess,
   onError,
-}: CompanyFormProps): JSX.Element {
+}: CompanyFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<Company>>({
     cmpPrefix: '',
     cmpName: '',
@@ -173,4 +173,5 @@ export default function CompanyForm({
     </form>
   )
 }
+
 

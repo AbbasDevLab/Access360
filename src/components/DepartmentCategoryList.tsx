@@ -15,7 +15,7 @@ interface DepartmentCategoryListProps {
 export default function DepartmentCategoryList({
   onEdit,
   onRefresh,
-}: DepartmentCategoryListProps): JSX.Element {
+}: DepartmentCategoryListProps): React.JSX.Element {
   const [categories, setCategories] = useState<DepartmentCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
@@ -163,4 +163,5 @@ export default function DepartmentCategoryList({
     </div>
   )
 }
+
 

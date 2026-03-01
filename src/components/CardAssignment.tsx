@@ -14,7 +14,7 @@ interface CardAssignmentProps {
   assignedCard?: Card
 }
 
-export default function CardAssignment({ cards, selectedCardId, onCardSelect, assignedCard }: CardAssignmentProps): JSX.Element {
+export default function CardAssignment({ cards, selectedCardId, onCardSelect, assignedCard }: CardAssignmentProps): React.JSX.Element {
   const availableCards = cards.filter(card => card.status === 'available')
 
   if (assignedCard) {
@@ -66,6 +66,7 @@ export default function CardAssignment({ cards, selectedCardId, onCardSelect, as
     </div>
   )
 }
+
 
 
 

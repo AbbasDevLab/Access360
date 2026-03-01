@@ -5,7 +5,7 @@ interface ExitFlowProps {
   onExit: (cardId: string, cardReturned: boolean, notes?: string) => void
 }
 
-export default function ExitFlow({ onExit }: ExitFlowProps): JSX.Element {
+export default function ExitFlow({ onExit }: ExitFlowProps): React.JSX.Element {
   const [cardId, setCardId] = useState('')
   const [cardReturned, setCardReturned] = useState(true)
   const [notes, setNotes] = useState('')
@@ -122,6 +122,7 @@ export default function ExitFlow({ onExit }: ExitFlowProps): JSX.Element {
     </div>
   )
 }
+
 
 
 

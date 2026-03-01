@@ -13,7 +13,7 @@ interface GuardFormProps {
 export default function GuardForm({
   onSuccess,
   onError,
-}: GuardFormProps): JSX.Element {
+}: GuardFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<Guard>>({
     id: '',
     guardFullName: '',
@@ -298,4 +298,5 @@ export default function GuardForm({
     </form>
   )
 }
+
 

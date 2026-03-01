@@ -15,7 +15,7 @@ interface VisitorTypeListProps {
 export default function VisitorTypeList({
   onEdit,
   onRefresh,
-}: VisitorTypeListProps): JSX.Element {
+}: VisitorTypeListProps): React.JSX.Element {
   const [visitorTypes, setVisitorTypes] = useState<VisitorType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -197,4 +197,5 @@ export default function VisitorTypeList({
     </div>
   )
 }
+
 

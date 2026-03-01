@@ -14,7 +14,7 @@ interface OCRResultsProps {
   isProcessing?: boolean
 }
 
-export default function OCRResults({ fields, onFieldChange, isProcessing }: OCRResultsProps): JSX.Element {
+export default function OCRResults({ fields, onFieldChange, isProcessing }: OCRResultsProps): React.JSX.Element {
   if (isProcessing) {
     return (
       <div className="space-y-3">
@@ -70,6 +70,7 @@ export default function OCRResults({ fields, onFieldChange, isProcessing }: OCRR
     </div>
   )
 }
+
 
 
 

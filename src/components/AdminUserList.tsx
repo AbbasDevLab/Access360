@@ -15,7 +15,7 @@ interface AdminUserListProps {
 export default function AdminUserList({
   onEdit,
   onRefresh,
-}: AdminUserListProps): JSX.Element {
+}: AdminUserListProps): React.JSX.Element {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -197,4 +197,5 @@ export default function AdminUserList({
     </div>
   )
 }
+
 

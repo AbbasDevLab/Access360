@@ -6,7 +6,7 @@ interface ProtectedRouteProps {
   requiresAuth?: boolean
 }
 
-export default function ProtectedRoute({ children, requiresAuth = true }: ProtectedRouteProps): JSX.Element {
+export default function ProtectedRoute({ children, requiresAuth = true }: ProtectedRouteProps): React.JSX.Element {
   const location = useLocation()
   
   // Check authentication synchronously - no loading state needed
@@ -35,4 +35,5 @@ export default function ProtectedRoute({ children, requiresAuth = true }: Protec
 
   return <>{children}</>
 }
+
 

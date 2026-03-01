@@ -17,7 +17,7 @@ interface GuestVisitFormProps {
 export default function GuestVisitForm({
   onSuccess,
   onError,
-}: GuestVisitFormProps): JSX.Element {
+}: GuestVisitFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<GuestVisit>>({
     guestID: 0,
     guestCode: '',
@@ -328,4 +328,5 @@ export default function GuestVisitForm({
     </form>
   )
 }
+
 

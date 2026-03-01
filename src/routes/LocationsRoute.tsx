@@ -4,7 +4,7 @@ import LocationForm from '../components/LocationForm'
 import LocationList from '../components/LocationList'
 import type { Location } from '../services/locationsApi'
 
-export default function LocationsRoute(): JSX.Element {
+export default function LocationsRoute(): React.JSX.Element {
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -98,4 +98,5 @@ export default function LocationsRoute(): JSX.Element {
     </div>
   )
 }
+
 

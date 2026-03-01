@@ -18,7 +18,7 @@ interface ReturningVisitorLookupProps {
   onNewVisitor: () => void
 }
 
-export default function ReturningVisitorLookup({ onVisitorFound, onNewVisitor }: ReturningVisitorLookupProps): JSX.Element {
+export default function ReturningVisitorLookup({ onVisitorFound, onNewVisitor }: ReturningVisitorLookupProps): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [results, setResults] = useState<Guest[]>([])
@@ -191,6 +191,7 @@ export default function ReturningVisitorLookup({ onVisitorFound, onNewVisitor }:
     </div>
   )
 }
+
 
 
 

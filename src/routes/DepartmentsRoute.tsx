@@ -5,7 +5,7 @@ import DepartmentCategoryList from '../components/DepartmentCategoryList'
 import { API_CONFIG } from '../data/global'
 import type { DepartmentCategory } from '../services/departmentApi'
 
-export default function DepartmentsRoute(): JSX.Element {
+export default function DepartmentsRoute(): React.JSX.Element {
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -136,3 +136,4 @@ export default function DepartmentsRoute(): JSX.Element {
     </div>
   )
 }
+

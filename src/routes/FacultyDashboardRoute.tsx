@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRightOnRectangleIcon, PlusIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getScheduledGuestsByFaculty, createScheduledGuest, type ScheduledGuest, type CreateScheduledGuestDto } from '../services/scheduledGuestsApi'
 
-export default function FacultyDashboardRoute(): React.JSX.Element {
+export default function FacultyDashboardRoute(): React.JSX.Element | null {
   const [faculty, setFaculty] = useState<any>(null)
   const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
   const [showForm, setShowForm] = useState(false)

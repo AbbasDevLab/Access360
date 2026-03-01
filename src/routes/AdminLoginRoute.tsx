@@ -3,7 +3,7 @@ import { ShieldCheckIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getAllAdminUsers } from '../services/adminApi'
 
-export default function AdminLoginRoute(): JSX.Element {
+export default function AdminLoginRoute(): React.JSX.Element {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -174,4 +174,5 @@ export default function AdminLoginRoute(): JSX.Element {
     </div>
   )
 }
+
 

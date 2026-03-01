@@ -11,7 +11,7 @@ interface LocationFormProps {
 export default function LocationForm({
   onSuccess,
   onError,
-}: LocationFormProps): JSX.Element {
+}: LocationFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<Location>>({
     locPrefix: '',
     locName: '',
@@ -222,4 +222,5 @@ export default function LocationForm({
     </form>
   )
 }
+
 

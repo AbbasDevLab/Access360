@@ -4,7 +4,7 @@ import GuestForm from '../components/GuestForm'
 import GuestList from '../components/GuestList'
 import type { Guest } from '../services/guestsApi'
 
-export default function GuestsRoute(): JSX.Element {
+export default function GuestsRoute(): React.JSX.Element {
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -76,4 +76,5 @@ export default function GuestsRoute(): JSX.Element {
     </div>
   )
 }
+
 

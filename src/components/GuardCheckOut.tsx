@@ -9,7 +9,7 @@ interface GuardCheckOutProps {
   onSuccess: () => void
 }
 
-export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps): JSX.Element {
+export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps): React.JSX.Element {
   const [searchType, setSearchType] = useState<'name' | 'cnic' | 'card'>('name')
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -422,4 +422,5 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
     </div>
   )
 }
+
 

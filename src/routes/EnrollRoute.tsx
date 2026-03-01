@@ -16,7 +16,7 @@ export async function loader() {
   return null
 }
 
-export default function EnrollRoute(): JSX.Element {
+export default function EnrollRoute(): React.JSX.Element {
   const [mode, setMode] = useState<'lookup' | 'new' | 'exit'>('lookup')
   const [step, setStep] = useState<'scan' | 'form'>('scan')
   const [capturedImage, setCapturedImage] = useState('')
@@ -514,7 +514,7 @@ export default function EnrollRoute(): JSX.Element {
 
           <div>
             <label className="block text-sm font-medium text-neutral-200 mb-2">
-              Father Name
+              Husband Name / Father Name
             </label>
             <input
               type="text"
@@ -720,3 +720,4 @@ export default function EnrollRoute(): JSX.Element {
     </div>
   )
 }
+

@@ -24,7 +24,7 @@ interface ReportData {
   duration?: number
 }
 
-export default function ReportsDashboard(): JSX.Element {
+export default function ReportsDashboard(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'live' | 'daily' | 'monthly' | 'analytics'>('live')
   const [dateRange, setDateRange] = useState({
     start: new Date().toISOString().split('T')[0],
@@ -564,3 +564,4 @@ export default function ReportsDashboard(): JSX.Element {
     </div>
   )
 }
+

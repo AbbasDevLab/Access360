@@ -11,7 +11,7 @@ interface GuestFormProps {
 export default function GuestForm({
   onSuccess,
   onError,
-}: GuestFormProps): JSX.Element {
+}: GuestFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<Guest>>({
     fullName: '',
     fatherName: '',
@@ -110,7 +110,7 @@ export default function GuestForm({
 
         <div className="grid gap-2">
           <label htmlFor="fatherName" className="text-sm font-medium text-neutral-700">
-            Father Name <span className="text-red-500">*</span>
+            Husband Name / Father Name <span className="text-red-500">*</span>
           </label>
           <input
             id="fatherName"
@@ -303,4 +303,5 @@ export default function GuestForm({
     </form>
   )
 }
+
 

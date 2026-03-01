@@ -11,7 +11,7 @@ interface DepartmentCategoryFormProps {
 export default function DepartmentCategoryForm({
   onSuccess,
   onError,
-}: DepartmentCategoryFormProps): JSX.Element {
+}: DepartmentCategoryFormProps): React.JSX.Element {
   const [formData, setFormData] = useState<Partial<DepartmentCategory>>({
     categoryName: '',
     categoryStatus: true,
@@ -149,7 +149,7 @@ export default function DepartmentCategoryForm({
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={isSubmitting || !formData.categoryName.trim()}
+        disabled={isSubmitting || !formData.categoryName?.trim()}
         className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
@@ -167,3 +167,4 @@ export default function DepartmentCategoryForm({
     </form>
   )
 }
+

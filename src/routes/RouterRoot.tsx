@@ -16,7 +16,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import i18next, { setupI18n } from '../i18n'
 
-export default function RouterRoot(): JSX.Element {
+export default function RouterRoot(): React.JSX.Element {
   // Ensure i18n is initialized
   React.useEffect(() => {
     if (!i18next.isInitialized) {
@@ -69,6 +69,8 @@ export default function RouterRoot(): JSX.Element {
     }
   }, [location])
   
+  const isMinimalHome = location.pathname === '/'
+  
   const menuItems = [
     { path: '/', label: 'Home', icon: HomeIcon, requiresAuth: false },
     { path: '/enroll', label: 'Enroll', icon: UserPlusIcon, requiresAuth: true },
@@ -85,9 +87,18 @@ export default function RouterRoot(): JSX.Element {
   // Filter menu items based on authentication
   const visibleMenuItems = menuItems.filter(item => !item.requiresAuth || adminUser)
 
+  if (isMinimalHome) {
+    return (
+      <main className="min-h-screen bg-neutral-900">
+        <div className="p-0">
+          <Outlet />
+        </div>
+      </main>
+    )
+  }
+
   return (
     <div className="min-h-screen flex portal-theme bg-neutral-900">
-      {/* Vertical Sidebar */}
       <aside className="w-64 bg-neutral-800 border-r border-neutral-700 flex flex-col sticky top-0 h-screen">
         {/* Logo */}
         <div className="p-6 border-b border-neutral-700">
@@ -184,7 +195,6 @@ export default function RouterRoot(): JSX.Element {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto bg-neutral-900">
         <div className="p-6">
           <Outlet />
@@ -193,5 +203,6 @@ export default function RouterRoot(): JSX.Element {
     </div>
   )
 }
+
 
 

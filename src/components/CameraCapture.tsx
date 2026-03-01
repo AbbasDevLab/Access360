@@ -6,7 +6,7 @@ interface CameraCaptureProps {
   capturedImage?: string
 }
 
-export default function CameraCapture({ onCapture, capturedImage }: CameraCaptureProps): JSX.Element {
+export default function CameraCapture({ onCapture, capturedImage }: CameraCaptureProps): React.JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -242,6 +242,7 @@ export default function CameraCapture({ onCapture, capturedImage }: CameraCaptur
     </div>
   )
 }
+
 
 
 

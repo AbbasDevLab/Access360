@@ -4,7 +4,7 @@ import VisitorTypeForm from '../components/VisitorTypeForm'
 import VisitorTypeList from '../components/VisitorTypeList'
 import type { VisitorType } from '../services/visitorTypesApi'
 
-export default function VisitorTypesRoute(): JSX.Element {
+export default function VisitorTypesRoute(): React.JSX.Element {
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -98,4 +98,5 @@ export default function VisitorTypesRoute(): JSX.Element {
     </div>
   )
 }
+
 

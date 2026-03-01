@@ -3,7 +3,7 @@ import { ShieldCheckIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useNavigate } from 'react-router-dom'
 import { getAllGuards } from '../services/guardsApi'
 
-export default function GuardLoginRoute(): JSX.Element {
+export default function GuardLoginRoute(): React.JSX.Element {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -175,4 +175,5 @@ export default function GuardLoginRoute(): JSX.Element {
     </div>
   )
 }
+
 

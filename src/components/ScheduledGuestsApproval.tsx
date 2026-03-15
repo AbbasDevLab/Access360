@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getAllScheduledGuests, approveScheduledGuest, rejectScheduledGuest, type ScheduledGuest } from '../services/scheduledGuestsApi'
+import AdminScheduledGuestsPending from '../pages/AdminScheduledGuestsPending'
+import AdminScheduledGuestsApproved from '../pages/AdminScheduledGuestsApproved'
 
 export default function ScheduledGuestsApproval(): React.JSX.Element {
   const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
@@ -61,14 +63,20 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      <div className="bg-neutral-700 rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-neutral-100 mb-4">Scheduled Guests Approval</h2>
-        
-        {/* Pending Requests */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Pending Requests ({pendingGuests.length})</h3>
+      <div className="bg-neutral-700 rounded-xl shadow-lg p-6 space-y-8">
+        <h2 className="text-2xl font-bold text-neutral-100 mb-2">Scheduled Guests Approval</h2>
+
+        {/* Pending Faculty Visit Requests (from new API) */}
+        <section>
+          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Pending Faculty Visit Requests</h3>
+          <AdminScheduledGuestsPending />
+        </section>
+
+        {/* Existing Pending Scheduled Guests */}
+        <section>
+          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Pending Scheduled Guests ({pendingGuests.length})</h3>
           {pendingGuests.length === 0 ? (
-            <p className="text-neutral-400">No pending requests</p>
+            <p className="text-neutral-400">No pending scheduled guest requests</p>
           ) : (
             <div className="space-y-3">
               {pendingGuests.map((guest) => (
@@ -147,37 +155,13 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Approved Requests */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Approved ({approvedGuests.length})</h3>
-          {approvedGuests.length === 0 ? (
-            <p className="text-neutral-400">No approved requests</p>
-          ) : (
-            <div className="space-y-2">
-              {approvedGuests.slice(0, 5).map((guest) => (
-                <div key={guest.idpk} className="bg-neutral-600 rounded-lg p-3 border border-green-500/30">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-neutral-100">{guest.guestFullName}</span>
-                      <span className="ml-3 text-sm text-neutral-300">
-                        {new Date(guest.scheduledDate).toLocaleDateString()} at {guest.scheduledTime}
-                        {guest.carNumber && ` • Car: ${guest.carNumber}`}
-                      </span>
-                      <div className="text-xs text-neutral-300 mt-1">
-                        Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk}) • Purpose: {guest.purpose}
-                        {guest.arrivedAt && ` • Arrived: ${new Date(guest.arrivedAt).toLocaleString()}`}
-                        {guest.visitStatus === 'NoShow' && ' • No Show'}
-                      </div>
-                    </div>
-                    <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded text-xs font-medium">Approved</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Approved Faculty Visit Requests (new endpoint) */}
+        <section>
+          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Approved Faculty Visit Requests</h3>
+          <AdminScheduledGuestsApproved />
+        </section>
 
         {/* Rejected Requests */}
         {rejectedGuests.length > 0 && (

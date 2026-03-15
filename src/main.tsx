@@ -49,9 +49,6 @@ const router = createBrowserRouter([
   // Guard routes (standalone, not wrapped in RouterRoot)
   { path: 'guard/login', element: <GuardLoginRoute /> },
   { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
-  // Faculty routes (standalone, not wrapped in RouterRoot)
-  { path: 'faculty/login', element: <FacultyLoginRoute /> },
-  { path: 'faculty/dashboard', element: <FacultyDashboardRoute /> },
 ])
 
 const rootElement = document.getElementById('root')

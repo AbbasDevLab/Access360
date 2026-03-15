@@ -4,12 +4,12 @@ import { ArrowRightIcon, ArrowLeftIcon, UserIcon, ArrowRightOnRectangleIcon, Cal
 import GuardCheckIn from '../components/GuardCheckIn'
 import GuardCheckOut from '../components/GuardCheckOut'
 import { getActiveGuestVisits } from '../services/guestVisitApi'
-import { getApprovedScheduledGuests, markScheduledGuestArrived, markScheduledGuestNoShow, type ScheduledGuest } from '../services/scheduledGuestsApi'
+import { getApprovedGuestFacultyVisits, type GuestFacultyVisit } from '../api/guestFacultyVisit'
 
 export default function GuardDashboardRoute(): React.JSX.Element {
   const [mode, setMode] = useState<'dashboard' | 'checkin' | 'checkout'>('dashboard')
   const [activeVisits, setActiveVisits] = useState(0)
-  const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
+  const [scheduledGuests, setScheduledGuests] = useState<GuestFacultyVisit[]>([])
   const [scheduledSearch, setScheduledSearch] = useState('')
   const navigate = useNavigate()
 
@@ -25,30 +25,12 @@ export default function GuardDashboardRoute(): React.JSX.Element {
 
   const loadScheduledGuests = useCallback(async () => {
     try {
-      const guests = await getApprovedScheduledGuests()
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      const upcomingGuests = guests.filter(g => {
-        if (!g.scheduledDate) return false
-        const scheduled = new Date(g.scheduledDate)
-        scheduled.setHours(0, 0, 0, 0)
-        return scheduled >= today
-      })
-
-      setScheduledGuests(upcomingGuests)
-
-      // Auto-mark no-show for past approved guests without arrival
-      const pastGuests = guests.filter(g => {
-        if (!g.scheduledDate) return false
-        const scheduled = new Date(g.scheduledDate)
-        scheduled.setHours(0, 0, 0, 0)
-        return scheduled < today && !g.arrivedAt && g.status === 'Approved' && g.visitStatus !== 'NoShow'
-      })
-
-      if (pastGuests.length > 0) {
-        await Promise.allSettled(pastGuests.map(g => markScheduledGuestNoShow(g.idpk)))
-      }
+      const all = await getApprovedGuestFacultyVisits()
+      const today = new Date().toISOString().substring(0, 10) // "YYYY-MM-DD"
+      const todaysApproved = all.filter(
+        (v) => v.visitDate.substring(0, 10) === today,
+      )
+      setScheduledGuests(todaysApproved)
     } catch (error) {
       console.error('Error loading scheduled guests:', error)
       setScheduledGuests([])
@@ -93,9 +75,9 @@ export default function GuardDashboardRoute(): React.JSX.Element {
       const values = [
         guest.guestFullName,
         guest.guestCNIC,
-        guest.guestPhone,
-        guest.facultyName,
-        guest.facultyIdpk?.toString(),
+        guest.guestPhoneNumber,
+        guest.departmentName,
+        guest.facultyFullName,
       ]
         .filter(Boolean)
         .map(value => String(value).toLowerCase())
@@ -202,7 +184,7 @@ export default function GuardDashboardRoute(): React.JSX.Element {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-neutral-100 flex items-center gap-2">
                 <CalendarIcon className="w-6 h-6 text-blue-400" />
-                Approved Scheduled Guests ({filteredScheduledGuests.length})
+                Approved Scheduled Faculty Guests ({filteredScheduledGuests.length})
               </h2>
             </div>
             <div className="mb-4">
@@ -220,7 +202,7 @@ export default function GuardDashboardRoute(): React.JSX.Element {
               <div className="space-y-2 max-h-[420px] overflow-y-auto">
                 {filteredScheduledGuests.map((guest) => (
                   <div
-                    key={guest.idpk}
+                    key={guest.id}
                     className="p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg"
                   >
                     <div className="flex items-center justify-between">
@@ -228,45 +210,28 @@ export default function GuardDashboardRoute(): React.JSX.Element {
                         {guest.guestFullName}
                       </div>
                       <div className="text-xs text-blue-300 font-medium">
-                        {guest.visitStatus === 'Arrived' ? 'Arrived' : guest.visitStatus === 'NoShow' ? 'No Show' : 'Approved'}
+                        {guest.approvalStatus}
                       </div>
                     </div>
                     <div className="text-xs text-neutral-300 mt-1 space-y-1">
                       <div>
                         CNIC: {guest.guestCNIC}
-                        {guest.carNumber && <span className="ml-3">Car: {guest.carNumber}</span>}
+                        {guest.guestPhoneNumber && <span className="ml-3">Phone: {guest.guestPhoneNumber}</span>}
                       </div>
                       <div>
-                        Date: {new Date(guest.scheduledDate).toLocaleDateString()}
-                        <span className="ml-3">Time: {guest.scheduledTime}</span>
+                        Date: {guest.visitDate.substring(0, 10)}
+                        <span className="ml-3">Time: {guest.visitTime}</span>
                       </div>
                       <div>
-                        Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk})
+                        Department: {guest.departmentName}
                       </div>
-                      {guest.purpose && (
-                        <div>Purpose: {guest.purpose}</div>
-                      )}
-                      {guest.arrivedAt && (
-                        <div>Arrived At: {new Date(guest.arrivedAt).toLocaleString()}</div>
+                      <div>
+                        Faculty: <span>{guest.facultyFullName ?? 'Unknown faculty'}</span>
+                      </div>
+                      {guest.visitPurpose && (
+                        <div>Purpose: {guest.visitPurpose}</div>
                       )}
                     </div>
-                    {guest.visitStatus !== 'Arrived' && (
-                      <div className="mt-3">
-                        <button
-                          onClick={async () => {
-                            try {
-                              await markScheduledGuestArrived(guest.idpk)
-                              await loadScheduledGuests()
-                            } catch (error: any) {
-                              alert(error.message || 'Failed to mark as arrived')
-                            }
-                          }}
-                          className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium"
-                        >
-                          Mark Arrived
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

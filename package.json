@@ -24,6 +24,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",
     "@yudiel/react-qr-scanner": "^2.3.1",
+    "axios": "^1.13.6",
     "classnames": "^2.5.1",
     "i18next": "^25.5.3",
     "jotai": "^2.15.0",

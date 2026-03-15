@@ -21,8 +21,7 @@ export default function FacultyLoginRoute(): React.JSX.Element {
     setIsLoading(true)
     setError('')
 
-    try {
-      const faculty = await facultyLogin(username, password)
+    const loginWithFaculty = (faculty: any) => {
       const facultyIdpk = normalizeFacultyId(faculty)
       localStorage.setItem('facultyUser', JSON.stringify({
         ...faculty,
@@ -30,33 +29,27 @@ export default function FacultyLoginRoute(): React.JSX.Element {
         loggedIn: true,
       }))
       navigate('/faculty/dashboard')
-    } catch (err: any) {
-      // Fallback to basic lookup if login endpoint is not ready
-      try {
-        const faculties = await getAllFaculties()
-        const faculty = faculties.find(f => f.username?.toLowerCase() === username.toLowerCase())
-        if (!faculty) {
-          setError('Invalid username or password')
+    }
+
+    try {
+      // Try fallback first: get faculties and match username/password (backend may not have /Faculty/Login)
+      const faculties = await getAllFaculties()
+      const faculty = faculties.find(f => f.username?.toLowerCase() === username.toLowerCase())
+      if (faculty) {
+        if (!faculty.facultyPassword || faculty.facultyPassword === password) {
+          loginWithFaculty(faculty)
           return
         }
-
-        // If password isn't returned from API, allow any password (dev fallback)
-        if (faculty.facultyPassword && faculty.facultyPassword !== password) {
-          setError('Invalid username or password')
-          return
-        }
-
-        const facultyIdpk = normalizeFacultyId(faculty)
-        localStorage.setItem('facultyUser', JSON.stringify({
-          ...faculty,
-          facultyIdpk,
-          loggedIn: true,
-        }))
-        navigate('/faculty/dashboard')
-      } catch (fallbackError: any) {
-        console.error('Faculty login error:', err, fallbackError)
-        setError(err?.message || fallbackError?.message || 'Login failed. Please try again.')
+        setError('Invalid username or password')
+        return
       }
+
+      // Otherwise try dedicated login endpoint if backend has it
+      const facultyFromApi = await facultyLogin(username, password)
+      loginWithFaculty(facultyFromApi)
+    } catch (err: any) {
+      console.error('Faculty login error:', err)
+      setError(err?.message || 'Login failed. Check credentials or try demo: demo.faculty / Demo@123')
     } finally {
       setIsLoading(false)
     }
@@ -71,6 +64,7 @@ export default function FacultyLoginRoute(): React.JSX.Element {
           </div>
           <h1 className="text-3xl font-bold text-neutral-100 mb-2">Faculty Portal</h1>
           <p className="text-neutral-300">Login to schedule guests</p>
+          <p className="text-neutral-400 text-sm mt-2">Demo: <span className="text-neutral-300">demo.faculty</span> / <span className="text-neutral-300">Demo@123</span></p>
         </div>
 
         {error && (

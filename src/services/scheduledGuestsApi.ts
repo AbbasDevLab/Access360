@@ -42,29 +42,10 @@ export interface ApiError {
 
 /**
  * Get all scheduled guests
+ * TEMP: disabled old remote API (38.114.123.35)
  */
 export const getAllScheduledGuests = async (): Promise<ScheduledGuest[]> => {
-  try {
-    const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.GET_SCHEDULED_GUESTS), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      const errorData: ApiError = await response.json().catch(() => ({
-        message: `HTTP error! status: ${response.status}`,
-      }))
-      throw errorData
-    }
-
-    const data = await response.json()
-    return Array.isArray(data) ? data : []
-  } catch (error) {
-    console.error('Error fetching scheduled guests:', error)
-    throw error
-  }
+  return []
 }
 
 /**

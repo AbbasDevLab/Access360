@@ -1,6 +1,6 @@
 // Global API configuration
 export const API_CONFIG = {
-  BASE_URL: 'http://38.114.123.35:8188/api/',
+  BASE_URL: 'https://server.access360.site:88/api/',
 } as const
 
 // API helper function to create full URLs
@@ -45,6 +45,13 @@ export const GUEST_VISIT_ENDPOINTS = {
   CREATE: '/GuestVisit/CreateGuestVisit',
   UPDATE: '/GuestVisit/UpdateGuestVisit/{id}',
   DELETE: '/GuestVisit/DeleteGuestVisit/{id}',
+} as const
+
+// Guest Faculty Visit API endpoints
+export const GUEST_FACULTY_VISIT_ENDPOINTS = {
+  GET_PENDING: '/GuestFacultyVisit/GetPendingGuestFacultyVisits',
+  APPROVE: '/GuestFacultyVisit/ApproveGuestFacultyVisit',
+  REJECT: '/GuestFacultyVisit/RejectGuestFacultyVisit',
 } as const
 
 // Location API endpoints

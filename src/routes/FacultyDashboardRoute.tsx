@@ -24,7 +24,7 @@ export default function FacultyDashboardRoute(): React.JSX.Element | null {
   useEffect(() => {
     const stored = localStorage.getItem('facultyUser')
     if (!stored) {
-      navigate('/faculty/login')
+      window.location.href = 'https://faculty.access360.site/login'
       return
     }
     try {
@@ -33,17 +33,17 @@ export default function FacultyDashboardRoute(): React.JSX.Element | null {
         const facultyIdpk = user.facultyIdpk ?? user.idpk ?? user.id ?? user.Id ?? user.ID
         const normalizedId = typeof facultyIdpk === 'string' ? parseInt(facultyIdpk, 10) : facultyIdpk
         if (!Number.isFinite(normalizedId)) {
-          navigate('/faculty/login')
+          window.location.href = 'https://faculty.access360.site/login'
           return
         }
         setFaculty(user)
         setFormData(prev => ({ ...prev, FacultyIdpk: normalizedId }))
         loadScheduledGuests(normalizedId)
       } else {
-        navigate('/faculty/login')
+        window.location.href = 'https://faculty.access360.site/login'
       }
     } catch (e) {
-      navigate('/faculty/login')
+      window.location.href = 'https://faculty.access360.site/login'
     }
   }, [navigate])
 
@@ -89,7 +89,7 @@ export default function FacultyDashboardRoute(): React.JSX.Element | null {
 
   const handleLogout = () => {
     localStorage.removeItem('facultyUser')
-    navigate('/faculty/login')
+    window.location.href = 'https://faculty.access360.site/login'
   }
 
   const getStatusBadge = (status: string, visitStatus?: string) => {

@@ -47,7 +47,9 @@ export default function HomeRoute(): React.JSX.Element {
           </button>
 
           <button
-            onClick={() => navigate('/faculty/login')}
+            onClick={() => {
+              window.location.href = 'https://faculty.access360.site/login'
+            }}
             className="group relative flex flex-col items-start gap-3 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-900/30 px-6 py-6 text-left shadow-lg hover:shadow-emerald-900/40 hover:border-emerald-400 transition-all"
           >
             <div className="rounded-2xl bg-emerald-500/30 p-3 inline-flex items-center justify-center">

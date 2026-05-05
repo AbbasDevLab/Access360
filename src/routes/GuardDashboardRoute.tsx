@@ -4,6 +4,7 @@ import { ArrowRightIcon, ArrowLeftIcon, UserIcon, ArrowRightOnRectangleIcon, Cal
 import GuardCheckIn from '../components/GuardCheckIn'
 import GuardCheckOut from '../components/GuardCheckOut'
 import { getActiveGuestVisits } from '../services/guestVisitApi'
+import { getPktTodayYmd, toPktYmd } from '../utils/pktTime'
 import { getApprovedGuestFacultyVisits, type GuestFacultyVisit } from '../api/guestFacultyVisit'
 
 export default function GuardDashboardRoute(): React.JSX.Element {
@@ -26,10 +27,8 @@ export default function GuardDashboardRoute(): React.JSX.Element {
   const loadScheduledGuests = useCallback(async () => {
     try {
       const all = await getApprovedGuestFacultyVisits()
-      const today = new Date().toISOString().substring(0, 10) // "YYYY-MM-DD"
-      const todaysApproved = all.filter(
-        (v) => v.visitDate.substring(0, 10) === today,
-      )
+      const today = getPktTodayYmd()
+      const todaysApproved = all.filter((v) => toPktYmd(v.visitDate) === today)
       setScheduledGuests(todaysApproved)
     } catch (error) {
       console.error('Error loading scheduled guests:', error)

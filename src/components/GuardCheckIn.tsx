@@ -15,6 +15,26 @@ interface GuardCheckInProps {
   onSuccess: () => void
 }
 
+/** Shared guard portal field styles — high contrast on dark surfaces. */
+const guardField = {
+  label: 'mb-1.5 block text-sm font-medium text-neutral-200',
+  requiredMark: 'ml-0.5 text-red-400',
+  input:
+    'w-full rounded-lg border border-neutral-600 bg-neutral-900/80 px-4 py-3 text-neutral-100 shadow-sm placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35',
+  inputOcr:
+    'border-emerald-500/50 bg-emerald-950/50 font-medium text-emerald-50 placeholder:text-emerald-700/80',
+  select:
+    'w-full rounded-lg border border-neutral-600 bg-neutral-900/80 px-4 py-3 text-neutral-100 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35 [&>option]:bg-neutral-900',
+} as const
+
+function RequiredStar(): React.JSX.Element {
+  return (
+    <abbr title="required" className={guardField.requiredMark}>
+      *
+    </abbr>
+  )
+}
+
 export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): React.JSX.Element {
   const [step, setStep] = useState<'scan' | 'form'>('scan')
   const [capturedImage, setCapturedImage] = useState('')
@@ -211,57 +231,65 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
 
   if (step === 'scan') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 p-4 pb-10">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8">
             <button
+              type="button"
               onClick={onBack}
-              className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
+              className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white"
             >
-              <ArrowLeftIcon className="w-5 h-5" />
-              Back to Dashboard
+              <ArrowLeftIcon className="h-5 w-5 shrink-0" aria-hidden />
+              Back to dashboard
             </button>
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Check In - Scan ID Card</h2>
-            <p className="text-neutral-600">Please scan or upload the visitor's ID card</p>
+            <h2 className="text-2xl font-semibold tracking-tight text-neutral-100">Check in — scan ID</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-neutral-400">
+              Upload a photo of the CNIC or capture it with the camera. Text is read automatically; you can fix anything on the next step.
+            </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8">
             {errorMessage && (
-              <div className="mb-4 flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <XCircleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                <span className="text-sm text-yellow-700">{errorMessage}</span>
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/35 bg-amber-950/40 p-4 text-sm text-amber-100">
+                <XCircleIcon className="h-5 w-5 shrink-0 text-amber-400" aria-hidden />
+                <span>{errorMessage}</span>
               </div>
             )}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-3">
-                  <DocumentTextIcon className="w-5 h-5 inline mr-2" />
-                  Upload ID Document
+            <div className="grid gap-8 md:grid-cols-2 md:gap-10">
+              <div className="space-y-3">
+                <label htmlFor="guard-id-upload" className={guardField.label}>
+                  <span className="inline-flex items-center gap-2">
+                    <DocumentTextIcon className="h-5 w-5 shrink-0 text-blue-400" aria-hidden />
+                    Upload ID image or PDF
+                  </span>
                 </label>
                 <input
+                  id="guard-id-upload"
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                   disabled={ocrProcessing}
-                  className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-blue-50 file:px-4 file:py-2 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                  className="block w-full text-sm text-neutral-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2.5 file:font-medium file:text-white hover:file:bg-blue-500 disabled:opacity-50"
                 />
                 {ocrProcessing && (
-                  <div className="mt-4 text-center">
-                    <svg className="animate-spin h-8 w-8 mx-auto text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <div className="mt-6 text-center">
+                    <svg className="mx-auto h-8 w-8 animate-spin text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p className="mt-2 text-sm text-neutral-600">Extracting information from ID card...</p>
-                    <p className="mt-1 text-xs text-neutral-500">This may take a few seconds</p>
+                    <p className="mt-3 text-sm text-neutral-300">Reading the ID…</p>
+                    <p className="mt-1 text-xs text-neutral-500">Usually a few seconds</p>
                   </div>
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-3">
-                  <CameraIcon className="w-5 h-5 inline mr-2" />
-                  Or Capture Photo
-                </label>
+              <div className="space-y-3">
+                <p className={guardField.label}>
+                  <span className="inline-flex items-center gap-2">
+                    <CameraIcon className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+                    Or capture with camera
+                  </span>
+                </p>
                 <CameraCapture
                   onCapture={async (image) => {
                     setCapturedImage(image)
@@ -348,169 +376,190 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
     )
   }
 
+  const inputBase = (ocrKey: 'fullName' | 'fatherName' | 'cnicNumber') =>
+    `${guardField.input} ${ocrFilledFields.has(ocrKey) ? guardField.inputOcr : ''}`.trim()
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-800 to-neutral-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 p-4 pb-10">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <div className="rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8">
           <button
+            type="button"
             onClick={() => setStep('scan')}
-            className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white"
           >
-            <ArrowLeftIcon className="w-5 h-5" />
-            Back to Scan
+            <ArrowLeftIcon className="h-5 w-5 shrink-0" aria-hidden />
+            Back to scan
           </button>
-          <h2 className="text-2xl font-bold text-neutral-100 mb-2">Check In - Visitor Details</h2>
-          {existingGuest && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
-              Returning visitor found. Details pre-filled.
+          <h2 className="text-2xl font-semibold tracking-tight text-neutral-100">Check in — visitor details</h2>
+          <p className="mt-1.5 text-sm text-neutral-400">
+            Confirm identity and visit details. Fields marked with an asterisk are required before check-in.
+          </p>
+          {existingGuest ? (
+            <div
+              className="mt-4 rounded-xl border border-sky-500/35 bg-sky-950/50 px-4 py-3 text-sm text-sky-100"
+              role="status"
+            >
+              Returning visitor — profile loaded from the database. Review and complete the visit section below.
             </div>
-          )}
+          ) : null}
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-neutral-700 rounded-xl shadow-lg p-6 space-y-6">
-          {/* OCR Confidence and Raw Text Display */}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8"
+        >
           {showOcrResults && ocrRawText && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-blue-900">OCR Verification</h3>
-                {ocrConfidence && (
-                  <span className={`text-xs font-medium px-2 py-1 rounded ${
-                    ocrConfidence >= 80 ? 'bg-green-100 text-green-700' :
-                    ocrConfidence >= 70 ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+            <div className="rounded-xl border border-sky-500/30 bg-sky-950/40 p-4">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-sky-100">OCR verification</h3>
+                {ocrConfidence != null && (
+                  <span
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      ocrConfidence >= 80
+                        ? 'bg-emerald-500/20 text-emerald-200'
+                        : ocrConfidence >= 70
+                          ? 'bg-amber-500/20 text-amber-100'
+                          : 'bg-red-500/20 text-red-100'
+                    }`}
+                  >
                     Confidence: {Math.round(ocrConfidence)}%
                   </span>
                 )}
               </div>
-              <p className="text-xs text-blue-700 mb-2">Raw OCR text (for manual verification):</p>
-              <div className="bg-white border border-blue-200 rounded p-3 text-xs text-neutral-700 font-mono max-h-32 overflow-y-auto">
+              <p className="mb-2 text-xs text-sky-200/90">Raw text from the ID (for manual verification):</p>
+              <div className="max-h-32 overflow-y-auto rounded-lg border border-neutral-600 bg-neutral-950/80 p-3 font-mono text-xs text-neutral-300">
                 {ocrRawText}
               </div>
               <button
                 type="button"
                 onClick={() => setShowOcrResults(false)}
-                className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+                className="mt-3 text-xs font-medium text-sky-300 underline-offset-2 hover:text-sky-100 hover:underline"
               >
-                Hide
+                Hide OCR panel
               </button>
             </div>
           )}
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-200 mb-2">
-                Full Name <span className="text-red-500">*</span>
+              <label htmlFor="guard-full-name" className={guardField.label}>
+                Full name
+                <RequiredStar />
               </label>
               <input
+                id="guard-full-name"
                 type="text"
+                autoComplete="name"
                 value={formData.fullName}
                 onChange={(e) => {
                   handleInputChange('fullName', e.target.value)
-                  setOcrFilledFields(prev => {
+                  setOcrFilledFields((prev) => {
                     const next = new Set(prev)
                     if (!e.target.value) next.delete('fullName')
                     return next
                   })
                 }}
                 required
-                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
-                  ocrFilledFields.has('fullName') 
-                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
-                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
-                }`}
+                className={inputBase('fullName')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-200 mb-2">
-                Husband Name / Father Name
+              <label htmlFor="guard-father-name" className={guardField.label}>
+                Husband / father name
               </label>
               <input
+                id="guard-father-name"
                 type="text"
+                autoComplete="additional-name"
                 value={formData.fatherName}
                 onChange={(e) => {
                   handleInputChange('fatherName', e.target.value)
-                  setOcrFilledFields(prev => {
+                  setOcrFilledFields((prev) => {
                     const next = new Set(prev)
                     if (!e.target.value) next.delete('fatherName')
                     return next
                   })
                 }}
-                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
-                  ocrFilledFields.has('fatherName') 
-                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
-                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
-                }`}
+                className={inputBase('fatherName')}
               />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-200 mb-2">
-                CNIC Number
+              <label htmlFor="guard-cnic" className={guardField.label}>
+                CNIC number
+                <RequiredStar />
               </label>
               <input
+                id="guard-cnic"
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
                 value={formData.cnicNumber}
                 onChange={(e) => {
                   handleInputChange('cnicNumber', e.target.value)
-                  setOcrFilledFields(prev => {
+                  setOcrFilledFields((prev) => {
                     const next = new Set(prev)
                     if (!e.target.value) next.delete('cnicNumber')
                     return next
                   })
                 }}
-                className={`w-full rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 ${
-                  ocrFilledFields.has('cnicNumber') 
-                    ? 'border-blue-400 bg-blue-50 font-semibold text-blue-900' 
-                    : 'border-neutral-500 bg-neutral-600 text-neutral-100'
-                }`}
+                required
+                className={inputBase('cnicNumber')}
                 placeholder="35202-1234567-1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Phone Number <span className="text-red-500">*</span>
+              <label htmlFor="guard-phone" className={guardField.label}>
+                Phone number
+                <RequiredStar />
               </label>
               <input
+                id="guard-phone"
                 type="tel"
+                autoComplete="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                 required
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className={guardField.input}
                 placeholder="0300-1234567"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Address
+            <label htmlFor="guard-address" className={guardField.label}>
+              Address <span className="font-normal text-neutral-500">(optional)</span>
             </label>
             <input
+              id="guard-address"
               type="text"
+              autoComplete="street-address"
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-              placeholder="Enter address (optional)"
+              className={guardField.input}
+              placeholder="Street, area, city"
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Visitor Type <span className="text-red-500">*</span>
+              <label htmlFor="guard-visitor-type" className={guardField.label}>
+                Visitor type
+                <RequiredStar />
               </label>
               <select
+                id="guard-visitor-type"
                 value={formData.visitorTypeId}
                 onChange={(e) => handleInputChange('visitorTypeId', e.target.value)}
                 required
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className={guardField.select}
               >
-                <option value="">Select Visitor Type</option>
+                <option value="">Select visitor type…</option>
                 {visitorTypes.map((type) => (
                   <option key={type.idpk} value={type.idpk}>
                     {type.vTypeName}
@@ -520,16 +569,18 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Destination <span className="text-red-500">*</span>
+              <label htmlFor="guard-destination" className={guardField.label}>
+                Destination
+                <RequiredStar />
               </label>
               <select
+                id="guard-destination"
                 value={formData.destinationId}
                 onChange={(e) => handleInputChange('destinationId', e.target.value)}
                 required
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className={guardField.select}
               >
-                <option value="">Select Destination</option>
+                <option value="">Select destination…</option>
                 {destinations.map((dest) => (
                   <option key={dest.idpk} value={dest.idpk}>
                     {dest.categoryName}
@@ -540,89 +591,92 @@ export default function GuardCheckIn({ onBack, onSuccess }: GuardCheckInProps): 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Purpose of Visit
+            <label htmlFor="guard-purpose" className={guardField.label}>
+              Purpose of visit <span className="font-normal text-neutral-500">(optional)</span>
             </label>
             <input
+              id="guard-purpose"
               type="text"
               value={formData.purpose}
               onChange={(e) => handleInputChange('purpose', e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-              placeholder="Meeting, Delivery, etc."
+              className={guardField.input}
+              placeholder="e.g. meeting, delivery, interview"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Card Number Assigned
+            <label htmlFor="guard-card" className={guardField.label}>
+              RFID / card number <span className="font-normal text-neutral-500">(optional)</span>
             </label>
             <input
+              id="guard-card"
               type="text"
               value={formData.cardNumber}
               onChange={(e) => handleInputChange('cardNumber', e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-              placeholder="Enter RFID card number"
+              className={guardField.input}
+              placeholder="Card handed to visitor"
             />
           </div>
 
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <fieldset className="flex flex-wrap gap-6 border-0 p-0">
+            <legend className="sr-only">Visit flags</legend>
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:border-neutral-600">
               <input
                 type="checkbox"
                 checked={formData.isAppointment}
                 onChange={(e) => handleInputChange('isAppointment', e.target.checked)}
-                className="size-4 text-blue-600 focus:ring-blue-500"
+                className="size-4 rounded border-neutral-500 bg-neutral-900 text-blue-500 focus:ring-2 focus:ring-blue-500/40"
               />
-              <span className="text-sm text-neutral-700">Has Appointment</span>
+              <span className="text-sm text-neutral-200">Has appointment</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:border-neutral-600">
               <input
                 type="checkbox"
                 checked={formData.isEscortRequired}
                 onChange={(e) => handleInputChange('isEscortRequired', e.target.checked)}
-                className="size-4 text-blue-600 focus:ring-blue-500"
+                className="size-4 rounded border-neutral-500 bg-neutral-900 text-blue-500 focus:ring-2 focus:ring-blue-500/40"
               />
-              <span className="text-sm text-neutral-700">Escort Required</span>
+              <span className="text-sm text-neutral-200">Escort required</span>
             </label>
-          </div>
+          </fieldset>
 
           {submitStatus === 'error' && errorMessage && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <XCircleIcon className="w-5 h-5 text-red-600" />
-              <span className="text-sm text-red-700">{errorMessage}</span>
+            <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-950/50 p-4 text-sm text-red-100">
+              <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" aria-hidden />
+              <span>{errorMessage}</span>
             </div>
           )}
 
           {submitStatus === 'success' && (
-            <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircleIcon className="w-5 h-5 text-green-600" />
-              <span className="text-sm text-green-700">Visitor checked in successfully!</span>
+            <div className="flex items-start gap-3 rounded-xl border border-emerald-500/35 bg-emerald-950/40 p-4 text-sm text-emerald-100">
+              <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+              <span>Visitor checked in successfully.</span>
             </div>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 border-t border-neutral-700/80 pt-6 sm:flex-row sm:gap-4">
             <button
               type="button"
               onClick={() => setStep('scan')}
-              className="flex-1 rounded-lg border border-neutral-300 bg-white text-neutral-700 font-medium px-6 py-3 hover:bg-neutral-50 transition-colors"
+              className="order-2 flex-1 rounded-xl border border-neutral-600 bg-neutral-900/50 px-6 py-3.5 text-sm font-semibold text-neutral-200 transition-colors hover:bg-neutral-800 sm:order-1"
             >
               Back
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
+              className="order-1 flex-1 rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-neutral-600 disabled:shadow-none sm:order-2"
             >
               {isSubmitting ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Processing...
-                </>
+                  Processing…
+                </span>
               ) : (
-                'Complete Check In'
+                'Complete check-in'
               )}
             </button>
           </div>

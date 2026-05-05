@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { ShieldCheckIcon, PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
@@ -13,9 +14,24 @@ import type { AdminUser, Company } from '../services/adminApi'
 import type { Guard } from '../services/guardsApi'
 
 export default function AdminRoute() {
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState<'users' | 'companies' | 'guards' | 'scheduled' | 'faculty'>('users')
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    if (tab === 'scheduled' || tab === 'users' || tab === 'companies' || tab === 'guards' || tab === 'faculty') {
+      setActiveTab(tab)
+      if (tab === 'scheduled') {
+        // No create/list toggle on scheduled approval.
+        return
+      }
+      const view = params.get('view')
+      if (view === 'list' || view === 'create') setActiveView(view)
+    }
+  }, [location.search])
 
   const handleUserCreated = (user: AdminUser) => {
     console.log('Admin user created:', user)

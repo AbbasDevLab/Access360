@@ -3,6 +3,7 @@ import { MagnifyingGlassIcon, UserIcon } from '@heroicons/react/24/outline'
 import { getAllGuests, getGuestByCNIC, getGuestByCode } from '../services/guestsApi'
 import { getGuestVisitsByGuestId } from '../services/guestVisitApi'
 import type { Guest } from '../services/guestsApi'
+import { formatPktDateTime } from '../utils/pktTime'
 
 interface Visitor {
   id: string
@@ -84,9 +85,8 @@ export default function ReturningVisitorLookup({ onVisitorFound, onNewVisitor }:
     try {
       // Get last visit for this guest
       const visits = await getGuestVisitsByGuestId(guest.idpk)
-      const lastVisit = visits.length > 0 && visits[0].timeIn 
-        ? new Date(visits[0].timeIn).toLocaleDateString()
-        : undefined
+      const lastVisit =
+        visits.length > 0 && visits[0].timeIn ? formatPktDateTime(visits[0].timeIn) : undefined
       
       // Convert Guest to Visitor format for compatibility
       const visitor = {

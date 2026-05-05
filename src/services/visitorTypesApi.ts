@@ -1,4 +1,5 @@
 import { createApiUrl, VISITOR_TYPE_ENDPOINTS } from '../data/global'
+import { normalizeArray, normalizeObject } from '../utils/normalizeApi'
 
 // ==================== Visitor Type Types ====================
 
@@ -49,7 +50,8 @@ export const getAllVisitorTypes = async (): Promise<VisitorType[]> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeArray<VisitorType>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -75,7 +77,8 @@ export const getVisitorTypeById = async (id: number): Promise<VisitorType> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject<VisitorType>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -121,7 +124,8 @@ export const createVisitorType = async (visitorType: Partial<VisitorType>): Prom
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -161,7 +165,8 @@ export const updateVisitorType = async (id: number, visitorType: UpdateVisitorTy
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -187,7 +192,8 @@ export const deleteVisitorType = async (id: number): Promise<any> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json().catch(() => ({}))
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError

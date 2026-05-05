@@ -49,7 +49,7 @@ export default function FacultyLoginRoute(): React.JSX.Element {
       loginWithFaculty(facultyFromApi)
     } catch (err: any) {
       console.error('Faculty login error:', err)
-      setError(err?.message || 'Login failed. Check credentials or try demo: demo.faculty / Demo@123')
+      setError(err?.message || 'Login failed. Check your username and password.')
     } finally {
       setIsLoading(false)
     }
@@ -64,7 +64,6 @@ export default function FacultyLoginRoute(): React.JSX.Element {
           </div>
           <h1 className="text-3xl font-bold text-neutral-100 mb-2">Faculty Portal</h1>
           <p className="text-neutral-300">Login to schedule guests</p>
-          <p className="text-neutral-400 text-sm mt-2">Demo: <span className="text-neutral-300">demo.faculty</span> / <span className="text-neutral-300">Demo@123</span></p>
         </div>
 
         {error && (

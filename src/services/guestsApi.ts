@@ -1,4 +1,5 @@
 import { createApiUrl, GUEST_ENDPOINTS } from '../data/global'
+import { normalizeArray, normalizeObject } from '../utils/normalizeApi'
 
 // ==================== Guest Types ====================
 
@@ -73,7 +74,8 @@ export const getAllGuests = async (): Promise<Guest[]> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeArray<Guest>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -99,7 +101,8 @@ export const getGuestById = async (id: number): Promise<Guest> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject<Guest>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -125,7 +128,8 @@ export const getGuestByCode = async (code: string): Promise<Guest> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject<Guest>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -151,7 +155,8 @@ export const getGuestByCNIC = async (cnic: string): Promise<Guest> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject<Guest>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -205,7 +210,8 @@ export const createGuest = async (guest: Partial<Guest>): Promise<any> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -245,7 +251,8 @@ export const updateGuest = async (id: number, guest: UpdateGuestDto): Promise<an
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -271,7 +278,8 @@ export const deleteGuest = async (id: number): Promise<any> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json().catch(() => ({}))
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError

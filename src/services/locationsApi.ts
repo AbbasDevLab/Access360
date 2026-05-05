@@ -1,4 +1,5 @@
 import { createApiUrl, LOCATION_ENDPOINTS } from '../data/global'
+import { normalizeArray, normalizeObject } from '../utils/normalizeApi'
 
 // ==================== Location Types ====================
 
@@ -73,7 +74,8 @@ export const getAllLocations = async (): Promise<Location[]> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeArray<Location>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -99,7 +101,8 @@ export const getLocationById = async (id: number): Promise<Location> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject<Location>(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -153,7 +156,8 @@ export const createLocation = async (location: Partial<Location>): Promise<any> 
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -193,7 +197,8 @@ export const updateLocation = async (id: number, location: UpdateLocationDto): P
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json()
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -219,7 +224,8 @@ export const deleteLocation = async (id: number): Promise<any> => {
       } as ApiError
     }
 
-    return await response.json()
+    const json = await response.json().catch(() => ({}))
+    return normalizeObject(json)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError

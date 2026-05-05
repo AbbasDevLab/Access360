@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getActiveGuestVisits, getGuestVisitById } from '../services/guestVisitApi'
 import type { GuestVisit } from '../services/guestVisitApi'
+import { formatPktTime, parseAccess360ApiInstant } from '../utils/pktTime'
 
 interface VerificationResult {
   visitorName: string
@@ -84,46 +85,56 @@ export default function VerifyRoute(): React.JSX.Element {
         }
         
         if (visit && visit.timeIn && !visit.timeOut) {
-          // Valid active visit
-          const entryTime = new Date(visit.timeIn)
-          const entryTimeStr = entryTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-          
-          // Calculate expiry (if maxTimeMinutes is set, otherwise assume 4 hours)
-          const maxMinutes = visit.maxTimeMinutes || 240
-          const expiryTime = new Date(entryTime.getTime() + maxMinutes * 60000)
-          const now = new Date()
-          
-          const isExpired = now > expiryTime
-          
-          const verificationResult: VerificationResult = {
-            visitorName: visit.guest?.fullName || 'Unknown',
-            cnic: visit.guest?.cnicNumber || 'N/A',
-            visitorType: visit.visitorType?.vTypeName || 'N/A',
-            site: visit.departmentCategory?.categoryName || visit.department?.departmentName || 'N/A',
-            purpose: visit.visitPurpose || 'N/A',
-            cardNumber: visit.rfidCardNumber || 'N/A',
-            entryTime: entryTimeStr,
-            expiryTime: expiryTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            status: isExpired ? 'expired' : 'valid',
-            visit
-          }
-          
-          setScanResult(verificationResult)
-          
-          // Update stats
-          if (isExpired) {
-            setStats(prev => ({ ...prev, denied: prev.denied + 1 }))
-            setRecentScans(prev => [{
-              name: verificationResult.visitorName,
-              time: 'Just now',
-              status: 'denied'
-            }, ...prev.slice(0, 4)])
+          const entryTime = parseAccess360ApiInstant(visit.timeIn)
+          if (entryTime) {
+            const entryTimeStr = formatPktTime(visit.timeIn)
+
+            const maxMinutes = visit.maxTimeMinutes || 240
+            const expiryTime = new Date(entryTime.getTime() + maxMinutes * 60000)
+            const now = new Date()
+
+            const isExpired = now > expiryTime
+
+            const verificationResult: VerificationResult = {
+              visitorName: visit.guest?.fullName || 'Unknown',
+              cnic: visit.guest?.cnicNumber || 'N/A',
+              visitorType: visit.visitorType?.vTypeName || 'N/A',
+              site: visit.departmentCategory?.categoryName || visit.department?.departmentName || 'N/A',
+              purpose: visit.visitPurpose || 'N/A',
+              cardNumber: visit.rfidCardNumber || 'N/A',
+              entryTime: entryTimeStr,
+              expiryTime: formatPktTime(expiryTime.toISOString()),
+              status: isExpired ? 'expired' : 'valid',
+              visit,
+            }
+
+            setScanResult(verificationResult)
+
+            if (isExpired) {
+              setStats((prev) => ({ ...prev, denied: prev.denied + 1 }))
+              setRecentScans((prev) => [
+                { name: verificationResult.visitorName, time: 'Just now', status: 'denied' },
+                ...prev.slice(0, 4),
+              ])
+            } else {
+              setRecentScans((prev) => [
+                { name: verificationResult.visitorName, time: 'Just now', status: 'allowed' },
+                ...prev.slice(0, 4),
+              ])
+            }
           } else {
-            setRecentScans(prev => [{
-              name: verificationResult.visitorName,
-              time: 'Just now',
-              status: 'allowed'
-            }, ...prev.slice(0, 4)])
+            setScanResult({
+              visitorName: 'Unknown',
+              cnic: 'N/A',
+              visitorType: 'N/A',
+              site: 'N/A',
+              purpose: 'N/A',
+              cardNumber: qrData,
+              entryTime: 'N/A',
+              status: 'invalid',
+            })
+            setStats((prev) => ({ ...prev, denied: prev.denied + 1 }))
+            setRecentScans((prev) => [{ name: 'Unknown', time: 'Just now', status: 'denied' }, ...prev.slice(0, 4)])
           }
         } else {
           // Visit not found or already checked out

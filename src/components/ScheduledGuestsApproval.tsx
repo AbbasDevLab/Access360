@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getAllScheduledGuests, approveScheduledGuest, rejectScheduledGuest, type ScheduledGuest } from '../services/scheduledGuestsApi'
+import { formatPktDateTime } from '../utils/pktTime'
 import AdminScheduledGuestsPending from '../pages/AdminScheduledGuestsPending'
 import AdminScheduledGuestsApproved from '../pages/AdminScheduledGuestsApproved'
 
@@ -98,7 +99,7 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
                         <div><strong>Purpose:</strong> {guest.purpose}</div>
                         <div><strong>Faculty:</strong> {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk})</div>
                         {guest.arrivedAt && (
-                          <div><strong>Arrived At:</strong> {new Date(guest.arrivedAt).toLocaleString()}</div>
+                          <div><strong>Arrived At:</strong> {formatPktDateTime(guest.arrivedAt)}</div>
                         )}
                         {guest.visitStatus === 'NoShow' && (
                           <div><strong>Visit Status:</strong> No Show</div>

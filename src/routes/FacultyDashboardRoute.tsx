@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRightOnRectangleIcon, PlusIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getScheduledGuestsByFaculty, createScheduledGuest, type ScheduledGuest, type CreateScheduledGuestDto } from '../services/scheduledGuestsApi'
+import { formatPktDateTime } from '../utils/pktTime'
 
 export default function FacultyDashboardRoute(): React.JSX.Element | null {
   const [faculty, setFaculty] = useState<any>(null)
@@ -284,7 +285,7 @@ export default function FacultyDashboardRoute(): React.JSX.Element | null {
                         </div>
                         <div><strong>Purpose:</strong> {guest.purpose}</div>
                         {guest.arrivedAt && (
-                          <div><strong>Arrived At:</strong> {new Date(guest.arrivedAt).toLocaleString()}</div>
+                          <div><strong>Arrived At:</strong> {formatPktDateTime(guest.arrivedAt)}</div>
                         )}
                         {guest.visitStatus === 'NoShow' && (
                           <div><strong>Visit Status:</strong> No Show</div>

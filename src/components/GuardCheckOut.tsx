@@ -3,11 +3,17 @@ import { ArrowLeftIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, Clock
 import { getActiveGuestVisits, updateGuestVisit } from '../services/guestVisitApi'
 import { getGuestByCNIC, getGuestByCode } from '../services/guestsApi'
 import type { GuestVisit, ApiError } from '../services/guestVisitApi'
+import { formatPktDateTime, formatPktTime, parseAccess360ApiInstant } from '../utils/pktTime'
 
 interface GuardCheckOutProps {
   onBack: () => void
   onSuccess: () => void
 }
+
+const guardCard = 'rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8'
+const guardLabel = 'mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500'
+const guardInput =
+  'w-full rounded-lg border border-neutral-600 bg-neutral-900/80 py-3 pl-10 pr-4 text-neutral-100 placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35'
 
 export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps): React.JSX.Element {
   const [searchType, setSearchType] = useState<'name' | 'cnic' | 'card'>('name')
@@ -41,14 +47,14 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
 
   const formatTime = (timeString?: string | null) => {
     if (!timeString) return 'N/A'
-    const date = new Date(timeString)
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    return formatPktTime(timeString)
   }
 
   const getTimeInDuration = (timeIn?: string | null) => {
     if (!timeIn) return 'N/A'
+    const inTime = parseAccess360ApiInstant(timeIn)
+    if (!inTime) return 'N/A'
     const now = new Date()
-    const inTime = new Date(timeIn)
     const diffMs = now.getTime() - inTime.getTime()
     const diffMins = Math.floor(diffMs / 60000)
     if (diffMins < 60) return `${diffMins}m`
@@ -156,66 +162,67 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 p-4 pb-10">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className={guardCard}>
           <button
+            type="button"
             onClick={onBack}
-            className="flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-4"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white"
           >
-            <ArrowLeftIcon className="w-5 h-5" />
-            Back to Dashboard
+            <ArrowLeftIcon className="h-5 w-5 shrink-0" aria-hidden />
+            Back to dashboard
           </button>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Check Out - Visitor Exit</h2>
-          <p className="text-neutral-600">Search for visitor to process exit</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-neutral-100">Check out — visitor exit</h2>
+          <p className="mt-1.5 text-sm text-neutral-400">
+            Pick someone from the active list or search by name, CNIC, or card number.
+          </p>
         </div>
 
-        {/* Active Visitors List */}
         {activeVisitsList.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
-                <ClockIcon className="w-6 h-6 text-blue-600" />
-                Active Visitors ({activeVisitsList.length})
+          <div className={guardCard}>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-neutral-100">
+                <ClockIcon className="h-6 w-6 shrink-0 text-blue-400" aria-hidden />
+                Active on site ({activeVisitsList.length})
               </h2>
             </div>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
               {activeVisitsList.map((visit) => (
                 <div
                   key={visit.idpk}
-                  className="flex items-center justify-between p-4 bg-neutral-50 rounded-lg border border-neutral-200 hover:border-blue-300 transition-colors"
+                  className="flex flex-col gap-3 rounded-xl border border-neutral-600/80 bg-neutral-900/40 p-4 transition-colors hover:border-blue-500/40 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex-1">
-                    <div className="font-semibold text-neutral-900">
-                      {visit.guest?.fullName || 'Unknown Visitor'}
-                    </div>
-                    <div className="text-sm text-neutral-600 mt-1">
-                      <span>CNIC: {visit.guest?.cnicNumber || 'N/A'}</span>
-                      {visit.rfidCardNumber && (
-                        <span className="ml-3">Card: {visit.rfidCardNumber}</span>
-                      )}
-                      <span className="ml-3">In: {formatTime(visit.timeIn)} ({getTimeInDuration(visit.timeIn)})</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-neutral-100">{visit.guest?.fullName || 'Unknown visitor'}</div>
+                    <div className="mt-1 text-sm text-neutral-400">
+                      <span>CNIC {visit.guest?.cnicNumber || 'N/A'}</span>
+                      {visit.rfidCardNumber && <span className="ml-3">Card {visit.rfidCardNumber}</span>}
+                      <span className="ml-3">
+                        In {formatTime(visit.timeIn)} ({getTimeInDuration(visit.timeIn)})
+                      </span>
                     </div>
                     {visit.departmentCategory?.categoryName && (
-                      <div className="text-xs text-neutral-500 mt-1">
+                      <div className="mt-1 text-xs text-neutral-500">
                         Destination: {visit.departmentCategory.categoryName}
                       </div>
                     )}
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleQuickCheckout(visit)}
                     disabled={checkingOut === visit.idpk}
-                    className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {checkingOut === visit.idpk ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Processing...
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                        Processing…
                       </>
                     ) : (
                       <>
-                        <ArrowLeftIcon className="w-4 h-4" />
-                        Check Out
+                        <ArrowLeftIcon className="h-4 w-4 rotate-180" aria-hidden />
+                        Check out
                       </>
                     )}
                   </button>
@@ -225,185 +232,178 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
           </div>
         )}
 
-        {/* Search Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex gap-4 mb-4">
-            <button
-              onClick={() => setSearchType('name')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                searchType === 'name'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              By Name
-            </button>
-            <button
-              onClick={() => setSearchType('cnic')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                searchType === 'cnic'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              By CNIC
-            </button>
-            <button
-              onClick={() => setSearchType('card')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                searchType === 'card'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              By Card Number
-            </button>
+        <div className={guardCard}>
+          <p className="mb-3 text-sm font-medium text-neutral-300">Search by</p>
+          <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Search type">
+            {(['name', 'cnic', 'card'] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSearchType(key)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  searchType === key
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
+                    : 'border border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-neutral-500 hover:bg-neutral-800'
+                }`}
+              >
+                {key === 'name' ? 'Name' : key === 'cnic' ? 'CNIC' : 'Card number'}
+              </button>
+            ))}
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <label htmlFor="guard-checkout-search" className="sr-only">
+                Search query
+              </label>
+              <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-500" aria-hidden />
               <input
+                id="guard-checkout-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder={
-                  searchType === 'name' ? 'Enter visitor name...' :
-                  searchType === 'cnic' ? 'Enter CNIC number...' :
-                  'Enter card number...'
+                  searchType === 'name'
+                    ? 'Visitor name…'
+                    : searchType === 'cnic'
+                      ? 'CNIC…'
+                      : 'Card number…'
                 }
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className={guardInput}
               />
             </div>
             <button
+              type="button"
               onClick={handleSearch}
               disabled={searching || !searchQuery.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+              className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-neutral-600 disabled:shadow-none sm:shrink-0"
             >
-              {searching ? 'Searching...' : 'Search'}
+              {searching ? 'Searching…' : 'Search'}
             </button>
           </div>
         </div>
 
-        {/* Multiple Results */}
         {visits.length > 1 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Multiple Active Visits Found</h3>
+          <div className={guardCard}>
+            <h3 className="mb-4 text-lg font-semibold text-neutral-100">Multiple visits — choose one</h3>
             <div className="space-y-3">
               {visits.map((visit) => (
-                <div
+                <button
                   key={visit.idpk}
+                  type="button"
                   onClick={() => setSelectedVisit(visit)}
-                  className="p-4 border border-neutral-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors"
+                  className="w-full rounded-xl border border-neutral-600 bg-neutral-900/40 p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-neutral-900/70"
                 >
-                  <div className="font-medium text-neutral-900">{visit.guest?.fullName || 'Unknown'}</div>
-                  <div className="text-sm text-neutral-600">
-                    Checked in: {visit.timeIn ? new Date(visit.timeIn).toLocaleString() : 'N/A'}
+                  <div className="font-medium text-neutral-100">{visit.guest?.fullName || 'Unknown'}</div>
+                  <div className="text-sm text-neutral-400">
+                    Checked in: {visit.timeIn ? formatPktDateTime(visit.timeIn) : 'N/A'}
                   </div>
                   {visit.rfidCardNumber && (
-                    <div className="text-sm text-neutral-600">Card: {visit.rfidCardNumber}</div>
+                    <div className="text-sm text-neutral-400">Card: {visit.rfidCardNumber}</div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Selected Visit Details */}
         {selectedVisit && (
-          <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+          <div className={`${guardCard} space-y-6`}>
             <div>
-              <h3 className="text-lg font-semibold text-neutral-900 mb-4">Visitor Details</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              <h3 className="mb-4 text-lg font-semibold text-neutral-100">Visitor details</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <div className="text-sm text-neutral-600">Name</div>
-                  <div className="font-medium text-neutral-900">{selectedVisit.guest?.fullName || 'N/A'}</div>
+                  <div className={guardLabel}>Name</div>
+                  <div className="text-base font-medium text-neutral-100">{selectedVisit.guest?.fullName || 'N/A'}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-neutral-600">CNIC</div>
-                  <div className="font-medium text-neutral-900">{selectedVisit.guest?.cnicNumber || 'N/A'}</div>
+                  <div className={guardLabel}>CNIC</div>
+                  <div className="text-base font-medium text-neutral-100">{selectedVisit.guest?.cnicNumber || 'N/A'}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-neutral-600">Time In</div>
-                  <div className="font-medium text-neutral-900">
-                    {selectedVisit.timeIn ? new Date(selectedVisit.timeIn).toLocaleString() : 'N/A'}
+                  <div className={guardLabel}>Time in</div>
+                  <div className="text-base font-medium text-neutral-100">
+                    {selectedVisit.timeIn ? formatPktDateTime(selectedVisit.timeIn) : 'N/A'}
                   </div>
                 </div>
                 {selectedVisit.rfidCardNumber && (
                   <div>
-                    <div className="text-sm text-neutral-600">Card Number</div>
-                    <div className="font-medium text-neutral-900">{selectedVisit.rfidCardNumber}</div>
+                    <div className={guardLabel}>Card number</div>
+                    <div className="font-mono text-base font-medium text-neutral-100">{selectedVisit.rfidCardNumber}</div>
                   </div>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="flex items-center gap-2 mb-4 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:border-neutral-600">
                 <input
                   type="checkbox"
                   checked={cardReturned}
                   onChange={(e) => setCardReturned(e.target.checked)}
-                  className="size-4 text-blue-600 focus:ring-blue-500"
+                  className="size-4 rounded border-neutral-500 bg-neutral-900 text-blue-500 focus:ring-2 focus:ring-blue-500/40"
                 />
-                <span className="text-sm font-medium text-neutral-700">RFID Card Returned</span>
+                <span className="text-sm font-medium text-neutral-200">RFID card returned</span>
               </label>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Notes (Optional)
+              <label htmlFor="guard-checkout-notes" className="mb-1.5 block text-sm font-medium text-neutral-200">
+                Notes <span className="font-normal text-neutral-500">(optional)</span>
               </label>
               <textarea
+                id="guard-checkout-notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-                placeholder="Any additional notes..."
+                className="w-full rounded-lg border border-neutral-600 bg-neutral-900/80 px-4 py-3 text-neutral-100 placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35"
+                placeholder="Anything security should know…"
               />
             </div>
 
             {status === 'error' && errorMessage && (
-              <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <XCircleIcon className="w-5 h-5 text-red-600" />
-                <span className="text-sm text-red-700">{errorMessage}</span>
+              <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-950/50 p-4 text-sm text-red-100">
+                <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" aria-hidden />
+                <span>{errorMessage}</span>
               </div>
             )}
 
             {status === 'success' && (
-              <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-green-700">Visitor checked out successfully!</span>
+              <div className="flex items-start gap-3 rounded-xl border border-emerald-500/35 bg-emerald-950/40 p-4 text-sm text-emerald-100">
+                <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+                <span>Visitor checked out successfully.</span>
               </div>
             )}
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 border-t border-neutral-700/80 pt-6 sm:flex-row sm:gap-4">
               <button
+                type="button"
                 onClick={() => {
                   setSelectedVisit(null)
                   setSearchQuery('')
                   setVisits([])
                 }}
-                className="flex-1 rounded-lg border border-neutral-300 bg-white text-neutral-700 font-medium px-6 py-3 hover:bg-neutral-50 transition-colors"
+                className="flex-1 rounded-xl border border-neutral-600 bg-neutral-900/50 px-6 py-3.5 text-sm font-semibold text-neutral-200 transition-colors hover:bg-neutral-800"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleCheckOut}
                 disabled={isProcessing}
-                className="flex-1 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 rounded-xl bg-red-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-900/30 transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-neutral-600 disabled:shadow-none"
               >
                 {isProcessing ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Processing...
-                  </>
+                    Processing…
+                  </span>
                 ) : (
-                  'Complete Check Out'
+                  'Complete check-out'
                 )}
               </button>
             </div>
@@ -411,10 +411,10 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
         )}
 
         {status === 'error' && !selectedVisit && errorMessage && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <XCircleIcon className="w-5 h-5 text-red-600" />
-              <span className="text-sm text-red-700">{errorMessage}</span>
+          <div className={guardCard}>
+            <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-950/50 p-4 text-sm text-red-100">
+              <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" aria-hidden />
+              <span>{errorMessage}</span>
             </div>
           </div>
         )}

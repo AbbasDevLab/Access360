@@ -18,9 +18,9 @@ export default function AdminLoginRoute(): React.JSX.Element {
       try {
         const user = JSON.parse(stored)
         if (user.loggedIn) {
-          // Already logged in, redirect to home or return URL
-          const from = (location.state as any)?.from?.pathname || '/'
-          navigate(from, { replace: true })
+          const from = (location.state as any)?.from?.pathname
+          const target = from && from !== '/login' ? from : '/dashboard'
+          navigate(target, { replace: true })
         }
       } catch (e) {
         // Invalid stored data, continue to login
@@ -71,10 +71,10 @@ export default function AdminLoginRoute(): React.JSX.Element {
           loggedIn: true,
           loginTime: new Date().toISOString()
         }))
-        
-        // Redirect to return URL or home
-        const from = (location.state as any)?.from?.pathname || '/'
-        navigate(from, { replace: true })
+        // Redirect to admin dashboard or the page they came from (never back to login)
+        const from = (location.state as any)?.from?.pathname
+        const target = from && from !== '/login' ? from : '/dashboard'
+        navigate(target, { replace: true })
       } else {
         setError('Invalid username or password')
       }

@@ -26,6 +26,8 @@ const getCurrentAdminId = (): number | null => {
 export default function AdminScheduledGuestsPending(): React.JSX.Element {
   const [pending, setPending] = useState<GuestFacultyVisit[]>([])
   const [loading, setLoading] = useState(true)
+  const [rejectingId, setRejectingId] = useState<number | null>(null)
+  const [rejectNote, setRejectNote] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -63,11 +65,15 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
       return
     }
     try {
-      await rejectGuestFacultyVisit(id, adminId)
+      const note = rejectNote.trim()
+      await rejectGuestFacultyVisit(id, adminId, note.length > 0 ? note : undefined)
       await load()
     } catch (error: any) {
       console.error('Reject guest faculty visit failed:', error)
       alert(error?.message || 'Failed to reject request')
+    } finally {
+      setRejectingId(null)
+      setRejectNote('')
     }
   }
 
@@ -103,7 +109,7 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
               Approve
             </button>
             <button
-              onClick={() => void handleReject(req.id)}
+              onClick={() => setRejectingId(req.id)}
               className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
             >
               Reject
@@ -111,6 +117,57 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
           </div>
         </div>
       ))}
+
+      {rejectingId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => {
+              setRejectingId(null)
+              setRejectNote('')
+            }}
+            aria-hidden
+          />
+          <div className="relative w-full max-w-lg rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-2xl shadow-black/60">
+            <h3 className="text-lg font-semibold text-neutral-100">Reject request</h3>
+            <p className="mt-1 text-sm text-neutral-400">
+              Optional: add a note so the faculty knows why it was rejected.
+            </p>
+
+            <label htmlFor="reject-note" className="mt-4 block text-sm font-medium text-neutral-200">
+              Rejection note (optional)
+            </label>
+            <textarea
+              id="reject-note"
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              rows={4}
+              className="mt-2 w-full rounded-xl border border-neutral-700 bg-neutral-950/60 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+              placeholder="e.g. CNIC mismatch, incomplete details, wrong date/time, policy reason…"
+            />
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setRejectingId(null)
+                  setRejectNote('')
+                }}
+                className="rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-neutral-200 hover:bg-neutral-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleReject(rejectingId)}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500"
+              >
+                Confirm reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

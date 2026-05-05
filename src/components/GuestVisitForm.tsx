@@ -31,7 +31,7 @@ export default function GuestVisitForm({
     isAppointment: false,
     isEscortRequired: false,
     rfidCardNumber: '',
-    idpk: 1,
+    idpk: 0,
   })
   const [guests, setGuests] = useState<Guest[]>([])
   const [visitorTypes, setVisitorTypes] = useState<VisitorType[]>([])

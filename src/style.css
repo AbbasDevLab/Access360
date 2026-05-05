@@ -4,60 +4,88 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji";
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ---- Design tokens (admin portal) ---- */
+.portal-theme {
+  --app-bg: #070b14;
+  --app-surface: #0f172a;
+  --app-elevated: #111827;
+  --app-border: #1e293b;
+  --app-muted: #94a3b8;
+  --app-text: #e2e8f0;
+  --app-accent: #3b82f6;
+  --app-accent-hover: #2563eb;
+  --app-ring: rgba(59, 130, 246, 0.45);
+  background-color: var(--app-bg);
+  color: var(--app-text);
+}
+
+.portal-theme :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--app-ring);
+  outline-offset: 2px;
 }
 
 /* Unified portal theme (admin + main app routes) */
 .portal-theme {
-  background-color: #0f172a;
-  color: #e5e7eb;
+  background-color: var(--app-bg);
+  color: var(--app-text);
 }
 
 .portal-theme .bg-white {
-  background-color: #1f2937 !important;
+  background-color: var(--app-elevated) !important;
 }
 
 .portal-theme .border-neutral-200 {
-  border-color: #374151 !important;
+  border-color: var(--app-border) !important;
 }
 
 .portal-theme .text-neutral-900 {
-  color: #f3f4f6 !important;
+  color: #f8fafc !important;
 }
 
 .portal-theme .text-neutral-700 {
-  color: #d1d5db !important;
+  color: #e2e8f0 !important;
 }
 
 .portal-theme .text-neutral-600 {
-  color: #9ca3af !important;
+  color: var(--app-muted) !important;
 }
 
 .portal-theme input,
 .portal-theme select,
 .portal-theme textarea {
-  background-color: #374151 !important;
-  border-color: #4b5563 !important;
-  color: #e5e7eb !important;
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: var(--app-text) !important;
 }
 
 .portal-theme input::placeholder,
 .portal-theme textarea::placeholder {
-  color: #9ca3af !important;
+  color: #64748b !important;
 }
 
 .portal-theme table {
-  background-color: #1f2937 !important;
-  color: #e5e7eb !important;
+  background-color: var(--app-elevated) !important;
+  color: var(--app-text) !important;
 }
 
 .portal-theme thead {
-  background-color: #111827 !important;
+  background-color: #0b1220 !important;
 }
 
 .portal-theme tbody {
-  background-color: #1f2937 !important;
+  background-color: var(--app-elevated) !important;
 }
 
 /* Ensure readable text on white fields inside portal theme */
@@ -67,7 +95,7 @@ html, body, #root {
 .portal-theme .bg-white input,
 .portal-theme .bg-white select,
 .portal-theme .bg-white textarea {
-  color: #111827 !important;
+  color: #0f172a !important;
 }
 
 /* Urdu font styling */

@@ -14,11 +14,10 @@ import GuestVisitsRoute from './routes/GuestVisitsRoute'
 import LocationsRoute from './routes/LocationsRoute'
 import VisitorTypesRoute from './routes/VisitorTypesRoute'
 import AdminRoute from './routes/AdminRoute'
+import AdminDashboardRoute from './routes/AdminDashboardRoute'
 import AdminLoginRoute from './routes/AdminLoginRoute'
 import GuardLoginRoute from './routes/GuardLoginRoute'
 import GuardDashboardRoute from './routes/GuardDashboardRoute'
-import FacultyLoginRoute from './routes/FacultyLoginRoute'
-import FacultyDashboardRoute from './routes/FacultyDashboardRoute'
 import ProtectedRoute from './components/ProtectedRoute'
 import { setupI18n } from './i18n'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -27,11 +26,16 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 setupI18n('en')
 
 const router = createBrowserRouter([
+  // Standalone routes first so /login and /guard/* are not matched by the catch-all under /
+  { path: 'login', element: <AdminLoginRoute /> },
+  { path: 'guard/login', element: <GuardLoginRoute /> },
+  { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
   {
     path: '/',
     element: <RouterRoot />,
     children: [
       { index: true, element: <HomeRoute /> },
+      { path: 'dashboard', element: <ProtectedRoute><AdminDashboardRoute /></ProtectedRoute> },
       { path: 'enroll', element: <ProtectedRoute><EnrollRoute /></ProtectedRoute> },
       { path: 'verify', element: (<React.Suspense fallback={null}><VerifyRoute /></React.Suspense>) },
       { path: 'passes', element: <ProtectedRoute><PassesRoute /></ProtectedRoute> },
@@ -44,11 +48,6 @@ const router = createBrowserRouter([
       { path: '*', element: <HomeRoute /> },
     ],
   },
-  // Admin login route (standalone, not wrapped in RouterRoot)
-  { path: 'login', element: <AdminLoginRoute /> },
-  // Guard routes (standalone, not wrapped in RouterRoot)
-  { path: 'guard/login', element: <GuardLoginRoute /> },
-  { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
 ])
 
 const rootElement = document.getElementById('root')

@@ -1,4 +1,5 @@
 import { createApiUrl, DEPARTMENT_ENDPOINTS } from '../data/global'
+import { normalizeArray, normalizeObject } from '../utils/normalizeApi'
 
 // ==================== Department Category Types ====================
 
@@ -71,7 +72,7 @@ export const getAllCategories = async (): Promise<DepartmentCategory[]> => {
     }
 
     const data = await response.json()
-    return data
+    return normalizeArray<DepartmentCategory>(data)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -104,7 +105,7 @@ export const getCategoryById = async (id: number): Promise<DepartmentCategory> =
     }
 
     const data = await response.json()
-    return data
+    return normalizeObject<DepartmentCategory>(data)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -161,7 +162,7 @@ export const createDepartmentCategory = async (
     }
 
     const data = await response.json()
-    return data
+    return normalizeObject<CreateCategoryResponse>(data)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -211,7 +212,7 @@ export const updateDepartmentCategory = async (
     }
 
     const data = await response.json()
-    return data
+    return normalizeObject<UpdateCategoryResponse>(data)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError
@@ -243,8 +244,8 @@ export const deleteDepartmentCategory = async (id: number): Promise<DeleteCatego
       } as ApiError
     }
 
-    const data = await response.json()
-    return data
+    const data = await response.json().catch(() => ({}))
+    return normalizeObject<DeleteCategoryResponse>(data)
   } catch (error) {
     if (error && typeof error === 'object' && 'message' in error) {
       throw error as ApiError

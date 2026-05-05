@@ -6,6 +6,7 @@ import {
   type GuestVisit,
   type ApiError,
 } from '../services/guestVisitApi'
+import { formatPktDateTime } from '../utils/pktTime'
 
 interface GuestVisitListProps {
   onEdit?: (visit: GuestVisit) => void
@@ -155,10 +156,10 @@ export default function GuestVisitList({
                     {visit.guest?.fullName || visit.guestCode || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                    {visit.timeIn ? new Date(visit.timeIn).toLocaleString() : 'N/A'}
+                    {visit.timeIn ? formatPktDateTime(visit.timeIn) : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                    {visit.timeOut ? new Date(visit.timeOut).toLocaleString() : 'Active'}
+                    {visit.timeOut ? formatPktDateTime(visit.timeOut) : 'Active'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
                     {visit.visitPurpose || 'N/A'}

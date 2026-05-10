@@ -179,7 +179,7 @@ export default function CameraCapture({ onCapture, capturedImage }: CameraCaptur
 
   return (
     <div className="space-y-3">
-      <div className="aspect-video bg-neutral-100 rounded-lg overflow-hidden relative">
+      <div className="relative aspect-video overflow-hidden rounded-xl bg-neutral-100 ring-1 ring-black/5">
         {capturedImage ? (
           <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
         ) : (
@@ -196,7 +196,7 @@ export default function CameraCapture({ onCapture, capturedImage }: CameraCaptur
             {!isStreaming && (
               <div className="w-full h-full flex items-center justify-center text-neutral-500 bg-neutral-50 min-h-[240px] absolute inset-0">
                 <div className="text-center">
-                  <CameraIcon className="w-12 h-12 mx-auto mb-2" />
+                  <CameraIcon className="mx-auto mb-2 h-12 w-12 text-[#2563eb]" aria-hidden />
                   <p className="text-xs">Camera preview will appear here</p>
                 </div>
               </div>
@@ -207,31 +207,34 @@ export default function CameraCapture({ onCapture, capturedImage }: CameraCaptur
       
       {error && <div className="text-sm text-red-600">{error}</div>}
       
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {!capturedImage && (
           <button
+            type="button"
             onClick={isStreaming ? stopCamera : startCamera}
-            className="flex items-center gap-2 px-3 py-2 rounded-md border hover:bg-neutral-50 text-sm"
+            className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50"
           >
-            <CameraIcon className="w-4 h-4" />
-            {isStreaming ? 'Stop Camera' : 'Start Camera'}
+            <CameraIcon className="h-4 w-4 text-[#2563eb]" aria-hidden />
+            {isStreaming ? 'Stop camera' : 'Start camera'}
           </button>
         )}
         
         {isStreaming && (
           <button
+            type="button"
             onClick={capturePhoto}
-            className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            className="flex items-center gap-2 rounded-xl bg-[#00A651] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#00A651]/30 transition-colors hover:bg-[#009148]"
           >
-            <PhotoIcon className="w-4 h-4" />
-            Capture Photo
+            <PhotoIcon className="h-4 w-4" aria-hidden />
+            Capture photo
           </button>
         )}
         
         {capturedImage && (
           <button
+            type="button"
             onClick={() => onCapture('')}
-            className="px-3 py-2 rounded-md border hover:bg-neutral-50 text-sm"
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50"
           >
             Retake
           </button>

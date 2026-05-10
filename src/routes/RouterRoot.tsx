@@ -3,9 +3,9 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   HomeIcon,
   PresentationChartLineIcon,
-  CalendarDaysIcon,
   BuildingOfficeIcon,
-  UserGroupIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
   MapPinIcon,
   TagIcon,
   ShieldCheckIcon,
@@ -17,7 +17,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import i18next, { setupI18n } from '../i18n'
 
-type NavGroup = 'overview' | 'people' | 'directory' | 'system'
+type NavGroup = 'overview' | 'counter' | 'directory' | 'system'
 
 type MenuItem = {
   path: string
@@ -29,12 +29,12 @@ type MenuItem = {
 
 const GROUP_LABELS: Record<NavGroup, string> = {
   overview: 'Overview',
-  people: 'People & visits',
+  counter: 'Check-in & check-out',
   directory: 'Organization',
   system: 'Administration',
 }
 
-const GROUP_ORDER: NavGroup[] = ['overview', 'people', 'directory', 'system']
+const GROUP_ORDER: NavGroup[] = ['overview', 'counter', 'directory', 'system']
 
 export default function RouterRoot(): React.JSX.Element {
   React.useEffect(() => {
@@ -96,8 +96,8 @@ export default function RouterRoot(): React.JSX.Element {
   const menuItems: MenuItem[] = [
     { path: '/dashboard', label: 'Dashboard', icon: HomeIcon, requiresAuth: true, group: 'overview' },
     { path: '/passes', label: 'Reports', icon: PresentationChartLineIcon, requiresAuth: true, group: 'overview' },
-    { path: '/guests', label: 'Guests', icon: UserGroupIcon, requiresAuth: true, group: 'people' },
-    { path: '/guest-visits', label: 'Visits', icon: CalendarDaysIcon, requiresAuth: true, group: 'people' },
+    { path: '/counter/check-in', label: 'Check in', icon: ArrowRightIcon, requiresAuth: true, group: 'counter' },
+    { path: '/counter/check-out', label: 'Check out', icon: ArrowLeftIcon, requiresAuth: true, group: 'counter' },
     { path: '/departments', label: 'Departments', icon: BuildingOfficeIcon, requiresAuth: true, group: 'directory' },
     { path: '/locations', label: 'Locations', icon: MapPinIcon, requiresAuth: true, group: 'directory' },
     { path: '/visitor-types', label: 'Visitor types', icon: TagIcon, requiresAuth: true, group: 'directory' },

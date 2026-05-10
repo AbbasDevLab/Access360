@@ -3,19 +3,30 @@ import { useNavigate } from 'react-router-dom'
 import {
   PresentationChartLineIcon,
   BuildingOfficeIcon,
-  UserGroupIcon,
   MapPinIcon,
   TagIcon,
   ShieldCheckIcon,
   ArrowRightIcon,
-  CalendarDaysIcon,
+  ArrowLeftIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline'
 import { ContentCard, PageLayout } from '../components/layout/PageLayout'
 
 const quickLinks = [
-  { path: '/guests', label: 'Guests', description: 'View and manage guests', icon: UserGroupIcon, color: 'violet' },
-  { path: '/guest-visits', label: 'Visits', description: 'Active and past visits', icon: CalendarDaysIcon, color: 'amber' },
+  {
+    path: '/counter/check-in',
+    label: 'Check in',
+    description: 'Same as guard desk — scan ID and register a visitor',
+    icon: ArrowRightIcon,
+    color: 'green',
+  },
+  {
+    path: '/counter/check-out',
+    label: 'Check out',
+    description: 'Search active visits and process visitor exit',
+    icon: ArrowLeftIcon,
+    color: 'red',
+  },
   { path: '/admin?tab=scheduled', label: 'Faculty requests', description: 'Approve or reject faculty guest requests', icon: ClipboardDocumentListIcon, color: 'emerald' },
   { path: '/departments', label: 'Departments', description: 'Departments & categories', icon: BuildingOfficeIcon, color: 'sky' },
   { path: '/locations', label: 'Locations', description: 'Manage locations', icon: MapPinIcon, color: 'rose' },
@@ -27,6 +38,8 @@ const quickLinks = [
 const colorClasses: Record<string, string> = {
   blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30 hover:border-blue-400',
   emerald: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:border-emerald-400',
+  green: 'bg-emerald-600/20 text-emerald-300 border-emerald-500/35 hover:border-emerald-400',
+  red: 'bg-red-500/20 text-red-300 border-red-500/35 hover:border-red-400',
   violet: 'bg-violet-500/20 text-violet-400 border-violet-500/30 hover:border-violet-400',
   amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:border-amber-400',
   sky: 'bg-sky-500/20 text-sky-400 border-sky-500/30 hover:border-sky-400',

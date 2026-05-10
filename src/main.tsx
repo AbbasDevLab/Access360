@@ -15,6 +15,8 @@ import LocationsRoute from './routes/LocationsRoute'
 import VisitorTypesRoute from './routes/VisitorTypesRoute'
 import AdminRoute from './routes/AdminRoute'
 import AdminDashboardRoute from './routes/AdminDashboardRoute'
+import AdminCheckInRoute from './routes/AdminCheckInRoute'
+import AdminCheckOutRoute from './routes/AdminCheckOutRoute'
 import AdminLoginRoute from './routes/AdminLoginRoute'
 import GuardLoginRoute from './routes/GuardLoginRoute'
 import GuardDashboardRoute from './routes/GuardDashboardRoute'
@@ -29,6 +31,9 @@ const router = createBrowserRouter([
   // Standalone routes first so /login and /guard/* are not matched by the catch-all under /
   { path: 'login', element: <AdminLoginRoute /> },
   { path: 'guard/login', element: <GuardLoginRoute /> },
+  // Sub-paths must be registered so each step gets a history entry (browser Back returns to dashboard).
+  { path: 'guard/dashboard/check-in', element: <GuardDashboardRoute /> },
+  { path: 'guard/dashboard/check-out', element: <GuardDashboardRoute /> },
   { path: 'guard/dashboard', element: <GuardDashboardRoute /> },
   {
     path: '/',
@@ -36,6 +41,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeRoute /> },
       { path: 'dashboard', element: <ProtectedRoute><AdminDashboardRoute /></ProtectedRoute> },
+      { path: 'counter/check-in', element: <ProtectedRoute><AdminCheckInRoute /></ProtectedRoute> },
+      { path: 'counter/check-out', element: <ProtectedRoute><AdminCheckOutRoute /></ProtectedRoute> },
       { path: 'enroll', element: <ProtectedRoute><EnrollRoute /></ProtectedRoute> },
       { path: 'verify', element: (<React.Suspense fallback={null}><VerifyRoute /></React.Suspense>) },
       { path: 'passes', element: <ProtectedRoute><PassesRoute /></ProtectedRoute> },

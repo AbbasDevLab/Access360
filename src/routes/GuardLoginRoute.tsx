@@ -90,24 +90,24 @@ export default function GuardLoginRoute(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <ShieldCheckIcon className="w-8 h-8 text-white" />
+    <div className="flex min-h-screen items-center justify-center bg-[#e8eaed] px-4 py-10">
+      <div className="w-full max-w-md rounded-[20px] bg-white p-8 shadow-md shadow-black/8 ring-1 ring-black/5">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#2563eb] shadow-inner">
+            <ShieldCheckIcon className="h-8 w-8 text-white" aria-hidden />
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">Guard Counter Login</h1>
-          <p className="text-sm text-neutral-600 mt-2">Access360 Visitor Management</p>
+          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Guard Counter Login</h1>
+          <p className="mt-2 text-sm text-neutral-500">Access360 Visitor Management</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label htmlFor="username" className="mb-2 block text-sm font-semibold text-neutral-900">
               Username
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
@@ -117,19 +117,19 @@ export default function GuardLoginRoute(): React.JSX.Element {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full rounded-xl border border-neutral-200 bg-neutral-50/80 py-3 pl-10 pr-3 text-neutral-900 shadow-inner placeholder:text-neutral-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/25"
                 placeholder="Enter your username"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
+            <label htmlFor="password" className="mb-2 block text-sm font-semibold text-neutral-900">
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <LockClosedIcon className="h-5 w-5 text-neutral-400" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <LockClosedIcon className="h-5 w-5 text-neutral-400" aria-hidden />
               </div>
               <input
                 id="password"
@@ -137,14 +137,14 @@ export default function GuardLoginRoute(): React.JSX.Element {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full rounded-xl border border-neutral-200 bg-neutral-50/80 py-3 pl-10 pr-3 text-neutral-900 shadow-inner placeholder:text-neutral-400 focus:border-[#2563eb] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/25"
                 placeholder="Enter your password"
               />
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {error}
             </div>
           )}
@@ -152,7 +152,7 @@ export default function GuardLoginRoute(): React.JSX.Element {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A651] py-3.5 px-4 text-sm font-semibold text-white shadow-lg shadow-[#00A651]/30 transition-colors hover:bg-[#009148] disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
           >
             {isLoading ? (
               <>

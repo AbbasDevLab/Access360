@@ -8,14 +8,20 @@ import { formatPktDateTime, formatPktTime, parseAccess360ApiInstant } from '../u
 interface GuardCheckOutProps {
   onBack: () => void
   onSuccess: () => void
+  headerContextLabel?: string
 }
 
-const guardCard = 'rounded-2xl border border-neutral-700/90 bg-neutral-800/70 p-6 shadow-xl shadow-black/40 sm:p-8'
-const guardLabel = 'mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-500'
+const GUARD_PAGE = 'min-h-screen bg-[#e8eaed] p-4 pb-10 md:p-6'
+const GUARD_CARD = 'rounded-[20px] bg-white p-6 shadow-md shadow-black/8 ring-1 ring-black/5 sm:p-8'
+const guardLabel = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-500'
 const guardInput =
-  'w-full rounded-lg border border-neutral-600 bg-neutral-900/80 py-3 pl-10 pr-4 text-neutral-100 placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35'
+  'w-full rounded-xl border border-neutral-200 bg-neutral-50/80 py-3 pl-10 pr-4 text-neutral-900 shadow-inner placeholder:text-neutral-400 focus:border-[#ED1C24] focus:outline-none focus:ring-2 focus:ring-[#ED1C24]/25'
 
-export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps): React.JSX.Element {
+export default function GuardCheckOut({
+  onBack,
+  onSuccess,
+  headerContextLabel = 'Guard',
+}: GuardCheckOutProps): React.JSX.Element {
   const [searchType, setSearchType] = useState<'name' | 'cnic' | 'card'>('name')
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
@@ -162,28 +168,36 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-950 via-neutral-900 to-neutral-950 p-4 pb-10">
+    <div className={GUARD_PAGE}>
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className={guardCard}>
+        <div className={GUARD_CARD}>
           <button
             type="button"
             onClick={onBack}
-            className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-neutral-400 transition-colors hover:bg-neutral-700/60 hover:text-white"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
           >
             <ArrowLeftIcon className="h-5 w-5 shrink-0" aria-hidden />
             Back to dashboard
           </button>
-          <h2 className="text-2xl font-semibold tracking-tight text-neutral-100">Check out — visitor exit</h2>
-          <p className="mt-1.5 text-sm text-neutral-400">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#ED1C24] text-xs font-bold text-white shadow-md shadow-[#ED1C24]/30">
+              OUT
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{headerContextLabel}</p>
+              <h2 className="text-xl font-bold tracking-tight text-neutral-900 md:text-2xl">Check out — visitor exit</h2>
+            </div>
+          </div>
+          <p className="text-sm text-neutral-600">
             Pick someone from the active list or search by name, CNIC, or card number.
           </p>
         </div>
 
         {activeVisitsList.length > 0 && (
-          <div className={guardCard}>
+          <div className={GUARD_CARD}>
             <div className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-neutral-100">
-                <ClockIcon className="h-6 w-6 shrink-0 text-blue-400" aria-hidden />
+              <h2 className="flex items-center gap-2 text-lg font-bold text-neutral-900">
+                <ClockIcon className="h-6 w-6 shrink-0 text-[#2563eb]" aria-hidden />
                 Active on site ({activeVisitsList.length})
               </h2>
             </div>
@@ -191,11 +205,11 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
               {activeVisitsList.map((visit) => (
                 <div
                   key={visit.idpk}
-                  className="flex flex-col gap-3 rounded-xl border border-neutral-600/80 bg-neutral-900/40 p-4 transition-colors hover:border-blue-500/40 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-neutral-50/50 p-4 transition-colors hover:border-neutral-300 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-neutral-100">{visit.guest?.fullName || 'Unknown visitor'}</div>
-                    <div className="mt-1 text-sm text-neutral-400">
+                    <div className="font-semibold text-neutral-900">{visit.guest?.fullName || 'Unknown visitor'}</div>
+                    <div className="mt-1 text-sm text-neutral-600">
                       <span>CNIC {visit.guest?.cnicNumber || 'N/A'}</span>
                       {visit.rfidCardNumber && <span className="ml-3">Card {visit.rfidCardNumber}</span>}
                       <span className="ml-3">
@@ -212,7 +226,7 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
                     type="button"
                     onClick={() => handleQuickCheckout(visit)}
                     disabled={checkingOut === visit.idpk}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#ED1C24] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#ED1C24]/25 transition-colors hover:bg-[#d91820] disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
                   >
                     {checkingOut === visit.idpk ? (
                       <>
@@ -232,18 +246,18 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
           </div>
         )}
 
-        <div className={guardCard}>
-          <p className="mb-3 text-sm font-medium text-neutral-300">Search by</p>
+        <div className={GUARD_CARD}>
+          <p className="mb-3 text-sm font-semibold text-neutral-900">Search by</p>
           <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Search type">
             {(['name', 'cnic', 'card'] as const).map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setSearchType(key)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
                   searchType === key
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
-                    : 'border border-neutral-600 bg-neutral-900/60 text-neutral-300 hover:border-neutral-500 hover:bg-neutral-800'
+                    ? 'bg-[#ED1C24] text-white shadow-md shadow-[#ED1C24]/25'
+                    : 'border border-neutral-200 bg-white text-neutral-800 shadow-sm hover:bg-neutral-50'
                 }`}
               >
                 {key === 'name' ? 'Name' : key === 'cnic' ? 'CNIC' : 'Card number'}
@@ -277,7 +291,7 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
               type="button"
               onClick={handleSearch}
               disabled={searching || !searchQuery.trim()}
-              className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/25 transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-neutral-600 disabled:shadow-none sm:shrink-0"
+              className="rounded-xl bg-[#ED1C24] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#ED1C24]/30 transition-colors hover:bg-[#d91820] disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none sm:shrink-0"
             >
               {searching ? 'Searching…' : 'Search'}
             </button>
@@ -285,22 +299,22 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
         </div>
 
         {visits.length > 1 && (
-          <div className={guardCard}>
-            <h3 className="mb-4 text-lg font-semibold text-neutral-100">Multiple visits — choose one</h3>
+          <div className={GUARD_CARD}>
+            <h3 className="mb-4 text-lg font-bold text-neutral-900">Multiple visits — choose one</h3>
             <div className="space-y-3">
               {visits.map((visit) => (
                 <button
                   key={visit.idpk}
                   type="button"
                   onClick={() => setSelectedVisit(visit)}
-                  className="w-full rounded-xl border border-neutral-600 bg-neutral-900/40 p-4 text-left transition-colors hover:border-blue-500/50 hover:bg-neutral-900/70"
+                  className="w-full rounded-xl border border-neutral-200 bg-neutral-50/50 p-4 text-left transition-colors hover:border-[#ED1C24]/40 hover:bg-white"
                 >
-                  <div className="font-medium text-neutral-100">{visit.guest?.fullName || 'Unknown'}</div>
-                  <div className="text-sm text-neutral-400">
+                  <div className="font-medium text-neutral-900">{visit.guest?.fullName || 'Unknown'}</div>
+                  <div className="text-sm text-neutral-600">
                     Checked in: {visit.timeIn ? formatPktDateTime(visit.timeIn) : 'N/A'}
                   </div>
                   {visit.rfidCardNumber && (
-                    <div className="text-sm text-neutral-400">Card: {visit.rfidCardNumber}</div>
+                    <div className="text-sm text-neutral-600">Card: {visit.rfidCardNumber}</div>
                   )}
                 </button>
               ))}
@@ -309,47 +323,47 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
         )}
 
         {selectedVisit && (
-          <div className={`${guardCard} space-y-6`}>
+          <div className={`${GUARD_CARD} space-y-6`}>
             <div>
-              <h3 className="mb-4 text-lg font-semibold text-neutral-100">Visitor details</h3>
+              <h3 className="mb-4 text-lg font-bold text-neutral-900">Visitor details</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <div className={guardLabel}>Name</div>
-                  <div className="text-base font-medium text-neutral-100">{selectedVisit.guest?.fullName || 'N/A'}</div>
+                  <div className="text-base font-medium text-neutral-900">{selectedVisit.guest?.fullName || 'N/A'}</div>
                 </div>
                 <div>
                   <div className={guardLabel}>CNIC</div>
-                  <div className="text-base font-medium text-neutral-100">{selectedVisit.guest?.cnicNumber || 'N/A'}</div>
+                  <div className="text-base font-medium text-neutral-900">{selectedVisit.guest?.cnicNumber || 'N/A'}</div>
                 </div>
                 <div>
                   <div className={guardLabel}>Time in</div>
-                  <div className="text-base font-medium text-neutral-100">
+                  <div className="text-base font-medium text-neutral-900">
                     {selectedVisit.timeIn ? formatPktDateTime(selectedVisit.timeIn) : 'N/A'}
                   </div>
                 </div>
                 {selectedVisit.rfidCardNumber && (
                   <div>
                     <div className={guardLabel}>Card number</div>
-                    <div className="font-mono text-base font-medium text-neutral-100">{selectedVisit.rfidCardNumber}</div>
+                    <div className="font-mono text-base font-medium text-neutral-900">{selectedVisit.rfidCardNumber}</div>
                   </div>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:border-neutral-600">
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1 py-1 hover:border-neutral-200">
                 <input
                   type="checkbox"
                   checked={cardReturned}
                   onChange={(e) => setCardReturned(e.target.checked)}
-                  className="size-4 rounded border-neutral-500 bg-neutral-900 text-blue-500 focus:ring-2 focus:ring-blue-500/40"
+                  className="size-4 rounded border-neutral-300 bg-white text-[#ED1C24] focus:ring-2 focus:ring-[#ED1C24]/25"
                 />
-                <span className="text-sm font-medium text-neutral-200">RFID card returned</span>
+                <span className="text-sm font-semibold text-neutral-900">RFID card returned</span>
               </label>
             </div>
 
             <div>
-              <label htmlFor="guard-checkout-notes" className="mb-1.5 block text-sm font-medium text-neutral-200">
+              <label htmlFor="guard-checkout-notes" className="mb-1.5 block text-sm font-semibold text-neutral-900">
                 Notes <span className="font-normal text-neutral-500">(optional)</span>
               </label>
               <textarea
@@ -357,26 +371,26 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full rounded-lg border border-neutral-600 bg-neutral-900/80 px-4 py-3 text-neutral-100 placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/35"
+                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-neutral-900 shadow-inner placeholder:text-neutral-400 focus:border-[#ED1C24] focus:outline-none focus:ring-2 focus:ring-[#ED1C24]/25"
                 placeholder="Anything security should know…"
               />
             </div>
 
             {status === 'error' && errorMessage && (
-              <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-950/50 p-4 text-sm text-red-100">
-                <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" aria-hidden />
+              <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+                <XCircleIcon className="h-5 w-5 shrink-0 text-red-700" aria-hidden />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {status === 'success' && (
-              <div className="flex items-start gap-3 rounded-xl border border-emerald-500/35 bg-emerald-950/40 p-4 text-sm text-emerald-100">
-                <CheckCircleIcon className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+              <div className="flex items-start gap-3 rounded-xl border border-[#00A651]/30 bg-green-50 p-4 text-sm text-neutral-900">
+                <CheckCircleIcon className="h-5 w-5 shrink-0 text-[#00A651]" aria-hidden />
                 <span>Visitor checked out successfully.</span>
               </div>
             )}
 
-            <div className="flex flex-col gap-3 border-t border-neutral-700/80 pt-6 sm:flex-row sm:gap-4">
+            <div className="flex flex-col gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:gap-4">
               <button
                 type="button"
                 onClick={() => {
@@ -384,7 +398,7 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
                   setSearchQuery('')
                   setVisits([])
                 }}
-                className="flex-1 rounded-xl border border-neutral-600 bg-neutral-900/50 px-6 py-3.5 text-sm font-semibold text-neutral-200 transition-colors hover:bg-neutral-800"
+                className="flex-1 rounded-xl border border-neutral-300 bg-white px-6 py-3.5 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-50"
               >
                 Cancel
               </button>
@@ -392,7 +406,7 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
                 type="button"
                 onClick={handleCheckOut}
                 disabled={isProcessing}
-                className="flex-1 rounded-xl bg-red-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-red-900/30 transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-neutral-600 disabled:shadow-none"
+                className="flex-1 rounded-xl bg-[#ED1C24] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#ED1C24]/30 transition-colors hover:bg-[#d91820] disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-2">
@@ -411,9 +425,9 @@ export default function GuardCheckOut({ onBack, onSuccess }: GuardCheckOutProps)
         )}
 
         {status === 'error' && !selectedVisit && errorMessage && (
-          <div className={guardCard}>
-            <div className="flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-950/50 p-4 text-sm text-red-100">
-              <XCircleIcon className="h-5 w-5 shrink-0 text-red-400" aria-hidden />
+          <div className={GUARD_CARD}>
+            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+              <XCircleIcon className="h-5 w-5 shrink-0 text-red-700" aria-hidden />
               <span>{errorMessage}</span>
             </div>
           </div>

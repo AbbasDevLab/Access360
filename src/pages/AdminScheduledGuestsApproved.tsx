@@ -22,31 +22,29 @@ export default function AdminScheduledGuestsApproved(): React.JSX.Element {
     void load()
   }, [])
 
-  if (loading) return <div className="text-neutral-300">Loading approved visits...</div>
-  if (approved.length === 0) return <div className="text-neutral-400">No approved visits</div>
+  if (loading) return <div className="text-neutral-600">Loading approved visits...</div>
+  if (approved.length === 0) return <div className="text-neutral-500">No approved visits</div>
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {approved.map((req) => (
         <div
           key={req.id}
-          className="flex items-center justify-between rounded bg-neutral-700 px-4 py-3 border border-green-600/60"
+          className="flex items-center justify-between rounded-xl border border-emerald-200 bg-neutral-50 px-4 py-3"
         >
           <div>
-            <div className="font-semibold text-neutral-100">{req.guestFullName}</div>
-            <div className="text-sm text-neutral-300">
+            <div className="font-semibold text-neutral-900">{req.guestFullName}</div>
+            <div className="text-sm text-neutral-900">
               {req.departmentName} · {req.visitDate.substring(0, 10)} {req.visitTime}
             </div>
-            <div className="text-xs text-neutral-400 mt-1">
+            <div className="mt-1 text-xs text-neutral-900">
               Faculty: <span>{req.facultyFullName ?? 'Unknown faculty'}</span>
             </div>
             {req.visitPurpose && (
-              <div className="text-xs text-neutral-400 mt-1">
-                Purpose: {req.visitPurpose}
-              </div>
+              <div className="mt-1 text-xs text-neutral-900">Purpose: {req.visitPurpose}</div>
             )}
           </div>
-          <span className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-300">
+          <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
             Approved
           </span>
         </div>
@@ -54,4 +52,3 @@ export default function AdminScheduledGuestsApproved(): React.JSX.Element {
     </div>
   )
 }
-

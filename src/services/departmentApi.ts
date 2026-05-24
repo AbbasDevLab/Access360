@@ -224,6 +224,72 @@ export const updateDepartmentCategory = async (
   }
 }
 
+export interface Department {
+  idpk: number
+  departmentName?: string | null
+  name?: string | null
+  departmentCategoryIdpk?: number | null
+  departmentStatus?: boolean | null
+}
+
+export function departmentDisplayName(d: Department): string {
+  const n = (d.departmentName || d.name || '').trim()
+  return n.length > 0 ? n : `Department #${d.idpk}`
+}
+
+/** All departments (site-wide). */
+export const getAllDepartments = async (): Promise<Department[]> => {
+  try {
+    const response = await fetch(createApiUrl(DEPARTMENT_ENDPOINTS.GET_DEPARTMENTS), {
+      method: 'GET',
+      headers: { accept: '*/*' },
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        message: errorData.message || `HTTP error! status: ${response.status}`,
+        status: response.status,
+        errors: errorData.errors,
+      } as ApiError
+    }
+    const data = await response.json()
+    return normalizeArray<Department>(data)
+  } catch (error) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      throw error as ApiError
+    }
+    throw { message: 'Network error: Failed to fetch departments', status: 0 } as ApiError
+  }
+}
+
+/** Departments under a category (destination). */
+export const getDepartmentsByCategory = async (categoryId: number): Promise<Department[]> => {
+  try {
+    const url = createApiUrl(
+      DEPARTMENT_ENDPOINTS.GET_DEPARTMENTS_BY_CATEGORY.replace('{categoryId}', categoryId.toString())
+    )
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { accept: '*/*' },
+    })
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        message: errorData.message || `HTTP error! status: ${response.status}`,
+        status: response.status,
+        errors: errorData.errors,
+      } as ApiError
+    }
+    const data = await response.json()
+    return normalizeArray<Department>(data)
+  } catch (error) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      throw error as ApiError
+    }
+    throw { message: 'Network error: Failed to fetch departments', status: 0 } as ApiError
+  }
+}
+
 // Delete department category
 export const deleteDepartmentCategory = async (id: number): Promise<DeleteCategoryResponse> => {
   try {

@@ -8,8 +8,10 @@ import { extractTextFromImage } from '../services/ocrService'
 import type { Guest, ApiError } from '../services/guestsApi'
 import type { VisitorType } from '../services/visitorTypesApi'
 import type { DepartmentCategory } from '../services/departmentApi'
-import { CNIC_MAX_INPUT_LENGTH, formatPakCnicInput } from '../utils/cnic'
+import { CNIC_MAX_INPUT_LENGTH, formatPakCnicInput, isCompletePakCnic } from '../utils/cnic'
+import { formatPakMobileInput, isValidPakMobile, PAK_MOBILE_MAX_INPUT_LENGTH } from '../utils/phone'
 import CameraCapture from './CameraCapture'
+import SearchableSelect from './SearchableSelect'
 
 interface GuardCheckInProps {
   onBack: () => void
@@ -59,7 +61,9 @@ export default function GuardCheckIn({
     phoneNumber: '',
     address: '',
     visitorTypeId: '',
+    visitorTypeCustom: '',
     destinationId: '',
+    destinationCustom: '',
     cardNumber: '',
     purpose: '',
     isAppointment: false,
@@ -173,7 +177,7 @@ export default function GuardCheckIn({
         fullName: guest.fullName,
         fatherName: guest.fatherName,
         cnicNumber: formatPakCnicInput(guest.cnicNumber || ''),
-        phoneNumber: guest.phoneNumber,
+        phoneNumber: formatPakMobileInput(String(guest.phoneNumber ?? '')),
         address: guest.address || '',
       }))
     } catch (error) {
@@ -191,9 +195,29 @@ export default function GuardCheckIn({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
     setSubmitStatus('idle')
     setErrorMessage('')
+
+    if (!isCompletePakCnic(formData.cnicNumber)) {
+      setErrorMessage('Enter the full 13-digit CNIC (#####-#######-#).')
+      return
+    }
+    if (!isValidPakMobile(formData.phoneNumber)) {
+      setErrorMessage('Enter a valid Pakistani mobile number: 11 digits starting with 03 (e.g. 0300-1234567).')
+      return
+    }
+    const hasVisitorType = Boolean(formData.visitorTypeId) || formData.visitorTypeCustom.trim().length > 0
+    const hasDestination = Boolean(formData.destinationId) || formData.destinationCustom.trim().length > 0
+    if (!hasVisitorType) {
+      setErrorMessage('Choose a visitor type from the list or enter a custom visitor type.')
+      return
+    }
+    if (!hasDestination) {
+      setErrorMessage('Choose a destination from the list or enter a custom destination.')
+      return
+    }
+
+    setIsSubmitting(true)
 
     try {
       let guestId: number
@@ -209,7 +233,7 @@ export default function GuardCheckIn({
           fullName: formData.fullName,
           fatherName: formData.fatherName,
           cnicNumber: formatPakCnicInput(formData.cnicNumber),
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: formatPakMobileInput(formData.phoneNumber),
           guestCode: `GUEST-${Date.now()}`,
           guestStatus: true,
           address: formData.address || 'Not provided',
@@ -219,13 +243,25 @@ export default function GuardCheckIn({
         guestCode = newGuest.guestCode || `GUEST-${Date.now()}`
       }
 
+      const purposeParts: string[] = []
+      if (formData.visitorTypeCustom.trim()) {
+        purposeParts.push(`Visitor type: ${formData.visitorTypeCustom.trim()}`)
+      }
+      if (formData.destinationCustom.trim()) {
+        purposeParts.push(`Destination: ${formData.destinationCustom.trim()}`)
+      }
+      if (formData.purpose.trim()) {
+        purposeParts.push(formData.purpose.trim())
+      }
+      const visitPurposeMerged = purposeParts.length > 0 ? purposeParts.join(' — ') : null
+
       // Create guest visit
       await createGuestVisit({
         guestID: guestId,
         guestCode: guestCode,
         visitorTypeId: formData.visitorTypeId ? parseInt(formData.visitorTypeId) : null,
         departmentCategoryIdpk: formData.destinationId ? parseInt(formData.destinationId) : null,
-        visitPurpose: formData.purpose,
+        visitPurpose: visitPurposeMerged,
         isAppointment: formData.isAppointment,
         isEscortRequired: formData.isEscortRequired,
         rfidCardNumber: formData.cardNumber || null,
@@ -543,6 +579,7 @@ export default function GuardCheckIn({
                   })
                 }}
                 required
+                pattern="\d{5}-\d{7}-\d{1}"
                 className={inputBase('cnicNumber')}
                 placeholder="35202-1234567-1"
               />
@@ -556,9 +593,12 @@ export default function GuardCheckIn({
               <input
                 id="guard-phone"
                 type="tel"
+                inputMode="numeric"
                 autoComplete="tel"
+                maxLength={PAK_MOBILE_MAX_INPUT_LENGTH}
+                title="11-digit mobile starting with 03"
                 value={formData.phoneNumber}
-                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                onChange={(e) => handleInputChange('phoneNumber', formatPakMobileInput(e.target.value))}
                 required
                 className={guardField.input}
                 placeholder="0300-1234567"
@@ -583,45 +623,79 @@ export default function GuardCheckIn({
 
           <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div>
-              <label htmlFor="guard-visitor-type" className={guardField.label}>
-                Visitor type
-                <RequiredStar />
-              </label>
-              <select
+              <SearchableSelect
                 id="guard-visitor-type"
+                label={
+                  <>
+                    Visitor type
+                    <RequiredStar />
+                  </>
+                }
+                labelClassName={guardField.label}
+                inputClassName={guardField.select}
                 value={formData.visitorTypeId}
-                onChange={(e) => handleInputChange('visitorTypeId', e.target.value)}
+                onChange={(v) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    visitorTypeId: v,
+                    ...(v ? { visitorTypeCustom: '' } : {}),
+                  }))
+                }
+                customCommittedText={formData.visitorTypeCustom}
+                onCustomCommitted={(text) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    visitorTypeId: '',
+                    visitorTypeCustom: text.trim(),
+                  }))
+                }
+                allowCustomValue
+                options={visitorTypes
+                  .filter((t) => t.vTypeStatus)
+                  .map((type) => ({ value: String(type.idpk), label: type.vTypeName }))}
                 required
-                className={guardField.select}
-              >
-                <option value="">Select visitor type…</option>
-                {visitorTypes.map((type) => (
-                  <option key={type.idpk} value={type.idpk}>
-                    {type.vTypeName}
-                  </option>
-                ))}
-              </select>
+                disabled={isSubmitting}
+                placeholder="Search or type a custom visitor type…"
+                emptyListMessage="No visitor types — type your own above"
+              />
             </div>
 
             <div>
-              <label htmlFor="guard-destination" className={guardField.label}>
-                Destination
-                <RequiredStar />
-              </label>
-              <select
+              <SearchableSelect
                 id="guard-destination"
+                label={
+                  <>
+                    Destination
+                    <RequiredStar />
+                  </>
+                }
+                labelClassName={guardField.label}
+                inputClassName={guardField.select}
                 value={formData.destinationId}
-                onChange={(e) => handleInputChange('destinationId', e.target.value)}
+                onChange={(v) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    destinationId: v,
+                    ...(v ? { destinationCustom: '' } : {}),
+                  }))
+                }
+                customCommittedText={formData.destinationCustom}
+                onCustomCommitted={(text) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    destinationId: '',
+                    destinationCustom: text.trim(),
+                  }))
+                }
+                allowCustomValue
+                options={destinations
+                  .filter((c) => c.categoryStatus)
+                  .map((dest) => ({ value: String(dest.idpk), label: dest.categoryName }))}
                 required
-                className={guardField.select}
-              >
-                <option value="">Select destination…</option>
-                {destinations.map((dest) => (
-                  <option key={dest.idpk} value={dest.idpk}>
-                    {dest.categoryName}
-                  </option>
-                ))}
-              </select>
+                disabled={isSubmitting}
+                placeholder="Search or type a custom destination…"
+                emptyListMessage="No destinations — type your own above"
+              />
             </div>
           </div>
 

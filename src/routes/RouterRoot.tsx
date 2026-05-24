@@ -117,7 +117,7 @@ export default function RouterRoot(): React.JSX.Element {
   }
 
   return (
-    <div className="portal-theme flex min-h-screen bg-neutral-950">
+    <div className="portal-theme flex min-h-screen bg-[#e8eaed]">
       {mobileNavOpen ? (
         <button
           type="button"
@@ -128,23 +128,23 @@ export default function RouterRoot(): React.JSX.Element {
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,100vw)] flex-col border-r border-neutral-800 bg-neutral-900 transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,100vw)] flex-col border-r border-neutral-200 bg-white shadow-lg transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${
           mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex items-start justify-between gap-2 border-b border-neutral-800 p-5">
+        <div className="flex items-start justify-between gap-2 border-b border-neutral-200 p-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-900/40">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#00A651] shadow-md shadow-[#00A651]/30">
               <span className="text-lg font-bold text-white">A</span>
             </div>
             <div className="min-w-0">
-              <div className="truncate text-base font-semibold tracking-tight text-neutral-100">{t('appName')}</div>
+              <div className="truncate text-base font-bold tracking-tight text-neutral-900">{t('appName')}</div>
               <div className="text-xs text-neutral-500">Visitor management</div>
             </div>
           </div>
           <button
             type="button"
-            className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white lg:hidden"
+            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 lg:hidden"
             onClick={() => setMobileNavOpen(false)}
             aria-label="Close menu"
           >
@@ -172,8 +172,8 @@ export default function RouterRoot(): React.JSX.Element {
                         onClick={() => setMobileNavOpen(false)}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                           isActive
-                            ? 'bg-blue-600/20 text-blue-100 ring-1 ring-blue-500/40'
-                            : 'text-neutral-300 hover:bg-neutral-800/80 hover:text-white'
+                            ? 'bg-[#00A651]/10 text-[#007a3d] ring-1 ring-[#00A651]/35 font-semibold'
+                            : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                         }`}
                       >
                         <Icon className="h-5 w-5 shrink-0 opacity-90" aria-hidden />
@@ -188,28 +188,28 @@ export default function RouterRoot(): React.JSX.Element {
         </nav>
 
         {adminUser ? (
-          <div className="border-t border-neutral-800 p-4">
-            <div className="mb-3 rounded-xl border border-neutral-700/80 bg-neutral-800/50 p-3">
+          <div className="border-t border-neutral-200 p-4">
+            <div className="mb-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
               <div className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">Signed in</div>
-              <div className="truncate text-sm font-semibold text-neutral-100">
+              <div className="truncate text-sm font-semibold text-neutral-900">
                 {adminUser.userFullName || adminUser.username}
               </div>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/15 px-4 py-2.5 text-sm font-medium text-red-200 ring-1 ring-red-500/25 transition-colors hover:bg-red-500/25"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
             >
               <ArrowRightOnRectangleIcon className="h-4 w-4" />
               Log out
             </button>
           </div>
         ) : (
-          <div className="border-t border-neutral-800 p-4">
+          <div className="border-t border-neutral-200 p-4">
             <NavLink
               to="/login"
               onClick={() => setMobileNavOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-900/30 transition-colors hover:bg-blue-500"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A651] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#00A651]/30 transition-colors hover:bg-[#009148]"
             >
               <ShieldCheckIcon className="h-4 w-4" />
               Admin sign in
@@ -217,7 +217,7 @@ export default function RouterRoot(): React.JSX.Element {
           </div>
         )}
 
-        <div className="border-t border-neutral-800 p-4">
+        <div className="border-t border-neutral-200 p-4">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
             <LanguageIcon className="h-4 w-4" aria-hidden />
             Language
@@ -228,8 +228,8 @@ export default function RouterRoot(): React.JSX.Element {
               onClick={() => i18next.changeLanguage('en')}
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 i18next.language === 'en'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-800 text-neutral-200 ring-1 ring-neutral-700 hover:bg-neutral-700'
+                  ? 'bg-[#00A651] text-white'
+                  : 'bg-white text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50'
               }`}
             >
               EN
@@ -239,8 +239,8 @@ export default function RouterRoot(): React.JSX.Element {
               onClick={() => i18next.changeLanguage('ur')}
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 i18next.language === 'ur'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-neutral-800 text-neutral-200 ring-1 ring-neutral-700 hover:bg-neutral-700'
+                  ? 'bg-[#00A651] text-white'
+                  : 'bg-white text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50'
               }`}
             >
               اردو
@@ -249,17 +249,17 @@ export default function RouterRoot(): React.JSX.Element {
         </div>
       </aside>
 
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-gradient-to-b from-neutral-950 to-neutral-900">
-        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-800/80 bg-neutral-950/90 px-4 py-3 backdrop-blur-md lg:hidden">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#e8eaed]">
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur-md lg:hidden">
           <button
             type="button"
-            className="rounded-lg p-2 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+            className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Open navigation menu"
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <span className="truncate text-sm font-semibold text-neutral-100">{t('appName')}</span>
+          <span className="truncate text-sm font-bold text-neutral-900">{t('appName')}</span>
         </div>
         <div className="mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
@@ -268,3 +268,8 @@ export default function RouterRoot(): React.JSX.Element {
     </div>
   )
 }
+
+
+
+
+

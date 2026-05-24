@@ -87,10 +87,10 @@ export default function AdminLoginRoute(): React.JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#e8eaed] px-4">
+      <div className="w-full max-w-md rounded-[20px] bg-white p-8 shadow-md shadow-black/8 ring-1 ring-black/5">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-[#00A651] shadow-md shadow-[#00A651]/30 mb-4">
             <ShieldCheckIcon className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-neutral-900">Admin Portal Login</h1>
@@ -114,7 +114,7 @@ export default function AdminLoginRoute(): React.JSX.Element {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00A651] focus:ring-[#00A651]/25"
                 placeholder="Enter your username"
                 autoComplete="username"
               />
@@ -135,7 +135,7 @@ export default function AdminLoginRoute(): React.JSX.Element {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-3 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:border-[#00A651] focus:ring-[#00A651]/25"
                 placeholder="Enter your password"
                 autoComplete="current-password"
               />
@@ -151,7 +151,7 @@ export default function AdminLoginRoute(): React.JSX.Element {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-[#00A651] shadow-lg shadow-[#00A651]/30 hover:bg-[#009148] disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

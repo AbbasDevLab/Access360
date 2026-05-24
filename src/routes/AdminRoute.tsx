@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { ShieldCheckIcon, PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
 import CompanyForm from '../components/CompanyForm'
@@ -8,8 +8,14 @@ import CompanyList from '../components/CompanyList'
 import GuardForm from '../components/GuardForm'
 import GuardList from '../components/GuardList'
 import ScheduledGuestsApproval from '../components/ScheduledGuestsApproval'
+import { ContentCard, PageLayout } from '../components/layout/PageLayout'
+import { ViewToggle } from '../components/layout/ViewToggle'
 import type { AdminUser, Company } from '../services/adminApi'
 import type { Guard } from '../services/guardsApi'
+
+const TAB_ACTIVE = 'bg-[#00A651] text-white shadow-md shadow-[#00A651]/25'
+const TAB_IDLE =
+  'bg-white text-neutral-700 ring-1 ring-neutral-200 hover:bg-neutral-50 hover:ring-[#00A651]/30'
 
 export default function AdminRoute() {
   const location = useLocation()
@@ -22,10 +28,7 @@ export default function AdminRoute() {
     const tab = params.get('tab')
     if (tab === 'scheduled' || tab === 'users' || tab === 'companies' || tab === 'guards') {
       setActiveTab(tab)
-      if (tab === 'scheduled') {
-        // No create/list toggle on scheduled approval.
-        return
-      }
+      if (tab === 'scheduled') return
       const view = params.get('view')
       if (view === 'list' || view === 'create') setActiveView(view)
     }
@@ -33,200 +36,100 @@ export default function AdminRoute() {
 
   const handleUserCreated = (user: AdminUser) => {
     console.log('Admin user created:', user)
-    if (activeView === 'list') {
-      setRefreshKey(prev => prev + 1)
-    } else {
-      setTimeout(() => {
-        setActiveView('list')
-        setRefreshKey(prev => prev + 1)
-      }, 2000)
-    }
+    if (activeView === 'list') setRefreshKey((prev) => prev + 1)
+    else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
   }
 
   const handleCompanyCreated = (company: Company) => {
     console.log('Company created:', company)
-    if (activeView === 'list') {
-      setRefreshKey(prev => prev + 1)
-    } else {
-      setTimeout(() => {
-        setActiveView('list')
-        setRefreshKey(prev => prev + 1)
-      }, 2000)
-    }
+    if (activeView === 'list') setRefreshKey((prev) => prev + 1)
+    else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
   }
 
   const handleGuardCreated = (guard: Guard) => {
     console.log('Guard created:', guard)
-    if (activeView === 'list') {
-      setRefreshKey(prev => prev + 1)
-    } else {
-      setTimeout(() => {
-        setActiveView('list')
-        setRefreshKey(prev => prev + 1)
-      }, 2000)
-    }
+    if (activeView === 'list') setRefreshKey((prev) => prev + 1)
+    else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
   }
 
-  const handleRefreshNeeded = () => {
-    setRefreshKey(prev => prev + 1)
-  }
+  const handleRefreshNeeded = () => setRefreshKey((prev) => prev + 1)
+
+  const entityLabel =
+    activeTab === 'users' ? 'User' : activeTab === 'companies' ? 'Company' : 'Guard'
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
-      <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
-        <h1 className="flex min-w-0 items-center gap-2 text-xl font-bold text-neutral-100 sm:text-2xl">
-          <ShieldCheckIcon className="h-6 w-6 shrink-0 text-blue-400" aria-hidden />
-          <span className="min-w-0 break-words">Admin Management</span>
-        </h1>
-      </div>
-
-      {/* Tab buttons — responsive grid */}
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <button
-          type="button"
-          onClick={() => setActiveTab('users')}
-          className={`flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm font-semibold leading-snug transition-all sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-base ${
-            activeTab === 'users'
-              ? 'bg-blue-600 text-white shadow-lg'
-              : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-blue-400'
-          }`}
-        >
-          <UserIcon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden />
-          <span className="break-words">Users</span>
+    <PageLayout
+      title="Admin management"
+      description="Users, companies, guards, and scheduled guest approvals."
+      actions={
+        activeTab !== 'scheduled' ? (
+          <ViewToggle
+            aria-label="Admin view"
+            value={activeView}
+            onChange={setActiveView}
+            options={[
+              { id: 'create', label: `Add ${entityLabel}`, icon: PlusIcon },
+              { id: 'list', label: `View ${entityLabel}s`, icon: ListBulletIcon },
+            ]}
+          />
+        ) : undefined
+      }
+    >
+      <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <button type="button" onClick={() => setActiveTab('users')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'users' ? TAB_ACTIVE : TAB_IDLE}`}>
+          <UserIcon className="h-5 w-5 shrink-0" aria-hidden />
+          Users
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('companies')}
-          className={`flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm font-semibold leading-snug transition-all sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-base ${
-            activeTab === 'companies'
-              ? 'bg-blue-600 text-white shadow-lg'
-              : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-blue-400'
-          }`}
-        >
-          <BuildingOfficeIcon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden />
-          <span className="break-words">Companies</span>
+        <button type="button" onClick={() => setActiveTab('companies')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'companies' ? TAB_ACTIVE : TAB_IDLE}`}>
+          <BuildingOfficeIcon className="h-5 w-5 shrink-0" aria-hidden />
+          Companies
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('guards')}
-          className={`flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm font-semibold leading-snug transition-all sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-base ${
-            activeTab === 'guards'
-              ? 'bg-blue-600 text-white shadow-lg'
-              : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-blue-400'
-          }`}
-        >
-          <LockClosedIcon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden />
-          <span className="break-words">Guards</span>
+        <button type="button" onClick={() => setActiveTab('guards')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'guards' ? TAB_ACTIVE : TAB_IDLE}`}>
+          <LockClosedIcon className="h-5 w-5 shrink-0" aria-hidden />
+          Guards
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('scheduled')}
-          className={`flex min-h-[3.25rem] min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm font-semibold leading-snug transition-all sm:flex-row sm:gap-2 sm:px-4 sm:py-3 sm:text-base ${
-            activeTab === 'scheduled'
-              ? 'bg-blue-600 text-white shadow-lg'
-              : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-blue-400'
-          }`}
-        >
-          <CalendarIcon className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" aria-hidden />
-          <span className="max-w-full break-words">Scheduled Guests</span>
+        <button type="button" onClick={() => setActiveTab('scheduled')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'scheduled' ? TAB_ACTIVE : TAB_IDLE}`}>
+          <CalendarIcon className="h-5 w-5 shrink-0" aria-hidden />
+          Scheduled guests
         </button>
       </div>
 
-      {/* Action Buttons - Hide for scheduled guests */}
-      {activeTab !== 'scheduled' && (
-        <div className="mb-4 flex min-w-0 flex-col gap-2 sm:flex-row sm:gap-3">
-          <button
-            type="button"
-            onClick={() => setActiveView('create')}
-            className={`flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all sm:px-5 sm:py-3 sm:text-base ${
-              activeView === 'create'
-                ? 'bg-green-600 text-white shadow-lg'
-                : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-green-400'
-            }`}
-          >
-            <PlusIcon className="h-5 w-5 shrink-0" aria-hidden />
-            <span className="truncate sm:whitespace-normal sm:break-words sm:text-center">
-              Add {activeTab === 'users' ? 'User' : activeTab === 'companies' ? 'Company' : 'Guard'}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('list')}
-            className={`flex min-h-[2.75rem] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all sm:px-5 sm:py-3 sm:text-base ${
-              activeView === 'list'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-neutral-800 text-neutral-200 ring-2 ring-inset ring-neutral-700 hover:ring-blue-400'
-            }`}
-          >
-            <ListBulletIcon className="h-5 w-5 shrink-0" aria-hidden />
-            <span className="truncate sm:whitespace-normal sm:break-words sm:text-center">
-              View {activeTab === 'users' ? 'Users' : activeTab === 'companies' ? 'Companies' : 'Guards'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Content Area - One Page */}
-      <div className="min-w-0 overflow-x-auto rounded-xl border border-neutral-700 bg-neutral-800 p-4 sm:p-6">
+      <ContentCard
+        title={
+          activeTab === 'scheduled'
+            ? 'Scheduled guests approval'
+            : activeView === 'create'
+              ? `New ${entityLabel.toLowerCase()}`
+              : `${entityLabel} list`
+        }
+      >
         {activeTab === 'users' && (
           <>
             {activeView === 'create' && (
-              <AdminUserForm
-                onSuccess={handleUserCreated}
-                onError={(error) => console.error('Error creating admin user:', error)}
-              />
+              <AdminUserForm onSuccess={handleUserCreated} onError={(e) => console.error(e)} />
             )}
-
-            {activeView === 'list' && (
-              <AdminUserList
-                key={refreshKey}
-                onRefresh={handleRefreshNeeded}
-              />
-            )}
+            {activeView === 'list' && <AdminUserList key={refreshKey} onRefresh={handleRefreshNeeded} />}
           </>
         )}
-
         {activeTab === 'companies' && (
           <>
             {activeView === 'create' && (
-              <CompanyForm
-                onSuccess={handleCompanyCreated}
-                onError={(error) => console.error('Error creating company:', error)}
-              />
+              <CompanyForm onSuccess={handleCompanyCreated} onError={(e) => console.error(e)} />
             )}
-
-            {activeView === 'list' && (
-              <CompanyList
-                key={refreshKey}
-                onRefresh={handleRefreshNeeded}
-              />
-            )}
+            {activeView === 'list' && <CompanyList key={refreshKey} onRefresh={handleRefreshNeeded} />}
           </>
         )}
-
         {activeTab === 'guards' && (
           <>
             {activeView === 'create' && (
-              <GuardForm
-                onSuccess={handleGuardCreated}
-                onError={(error) => console.error('Error creating guard:', error)}
-              />
+              <GuardForm onSuccess={handleGuardCreated} onError={(e) => console.error(e)} />
             )}
-
-            {activeView === 'list' && (
-              <GuardList
-                key={refreshKey}
-                onRefresh={handleRefreshNeeded}
-              />
-            )}
+            {activeView === 'list' && <GuardList key={refreshKey} onRefresh={handleRefreshNeeded} />}
           </>
         )}
-
-        {activeTab === 'scheduled' && (
-          <ScheduledGuestsApproval />
-        )}
-      </div>
-    </div>
+        {activeTab === 'scheduled' && <ScheduledGuestsApproval />}
+      </ContentCard>
+    </PageLayout>
   )
 }
 

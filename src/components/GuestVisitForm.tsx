@@ -3,11 +3,14 @@ import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { createGuestVisit } from '../services/guestVisitApi'
 import { getAllGuests } from '../services/guestsApi'
 import { getAllVisitorTypes } from '../services/visitorTypesApi'
-import { getAllCategories } from '../services/departmentApi'
+import { getAllCategories, getDepartmentsByCategory, departmentDisplayName } from '../services/departmentApi'
+import { getAllLocations } from '../services/locationsApi'
 import type { GuestVisit, ApiError } from '../services/guestVisitApi'
 import type { Guest } from '../services/guestsApi'
 import type { VisitorType } from '../services/visitorTypesApi'
-import type { DepartmentCategory } from '../services/departmentApi'
+import type { DepartmentCategory, Department } from '../services/departmentApi'
+import type { Location } from '../services/locationsApi'
+import SearchableSelect from './SearchableSelect'
 
 interface GuestVisitFormProps {
   onSuccess?: (visit: GuestVisit) => void
@@ -24,6 +27,7 @@ export default function GuestVisitForm({
     visitorTypeId: null,
     departmentCategoryIdpk: null,
     departmentIdpk: null,
+    locationIdpk: null,
     timeIn: new Date().toISOString(),
     maxTimeMinutes: null,
     notes: '',
@@ -36,6 +40,9 @@ export default function GuestVisitForm({
   const [guests, setGuests] = useState<Guest[]>([])
   const [visitorTypes, setVisitorTypes] = useState<VisitorType[]>([])
   const [categories, setCategories] = useState<DepartmentCategory[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [departmentsLoading, setDepartmentsLoading] = useState(false)
+  const [locations, setLocations] = useState<Location[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -43,20 +50,48 @@ export default function GuestVisitForm({
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [guestsData, typesData, categoriesData] = await Promise.all([
+        const [guestsData, typesData, categoriesData, locationsData] = await Promise.all([
           getAllGuests(),
           getAllVisitorTypes(),
           getAllCategories(),
+          getAllLocations(),
         ])
         setGuests(guestsData)
         setVisitorTypes(typesData)
         setCategories(categoriesData)
+        setLocations(locationsData.filter((l) => l.locStatus))
       } catch (error) {
         console.error('Error loading data:', error)
       }
     }
     loadData()
   }, [])
+
+  useEffect(() => {
+    const catId = formData.departmentCategoryIdpk
+    if (!catId) {
+      setDepartments([])
+      return
+    }
+    let cancelled = false
+    setDepartmentsLoading(true)
+    getDepartmentsByCategory(catId)
+      .then((rows) => {
+        if (!cancelled) {
+          setDepartments(rows.filter((d) => d.departmentStatus !== false))
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load departments:', err)
+        if (!cancelled) setDepartments([])
+      })
+      .finally(() => {
+        if (!cancelled) setDepartmentsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [formData.departmentCategoryIdpk])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,6 +114,7 @@ export default function GuestVisitForm({
           visitorTypeId: null,
           departmentCategoryIdpk: null,
           departmentIdpk: null,
+          locationIdpk: null,
           timeIn: new Date().toISOString(),
           maxTimeMinutes: null,
           notes: '',
@@ -167,45 +203,85 @@ export default function GuestVisitForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <label htmlFor="visitorTypeId" className="text-sm font-medium text-neutral-700">
-            Visitor Type
-          </label>
-          <select
-            id="visitorTypeId"
-            value={formData.visitorTypeId || ''}
-            onChange={(e) => handleInputChange('visitorTypeId', e.target.value ? parseInt(e.target.value) : null)}
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          >
-            <option value="">Select Visitor Type</option>
-            {visitorTypes.map((type) => (
-              <option key={type.idpk} value={type.idpk}>
-                {type.vTypeName}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          id="visitorTypeId"
+          label="Visitor type"
+          value={formData.visitorTypeId != null ? String(formData.visitorTypeId) : ''}
+          onChange={(v) => handleInputChange('visitorTypeId', v ? parseInt(v, 10) : null)}
+          options={visitorTypes.map((type) => ({
+            value: String(type.idpk),
+            label: type.vTypeName,
+          }))}
+          disabled={isSubmitting}
+          placeholder="Search visitor types…"
+          emptyListMessage="No visitor types"
+        />
 
-        <div className="grid gap-2">
-          <label htmlFor="departmentCategoryIdpk" className="text-sm font-medium text-neutral-700">
-            Department Category
-          </label>
-          <select
-            id="departmentCategoryIdpk"
-            value={formData.departmentCategoryIdpk || ''}
-            onChange={(e) => handleInputChange('departmentCategoryIdpk', e.target.value ? parseInt(e.target.value) : null)}
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          >
-            <option value="">Select Category</option>
-            {categories.map((category) => (
-              <option key={category.idpk} value={category.idpk}>
-                {category.categoryName}
-              </option>
-            ))}
-          </select>
+        <SearchableSelect
+          id="departmentCategoryIdpk"
+          label="Department category (destination)"
+          value={formData.departmentCategoryIdpk != null ? String(formData.departmentCategoryIdpk) : ''}
+          onChange={(v) => {
+            handleInputChange('departmentCategoryIdpk', v ? parseInt(v, 10) : null)
+            handleInputChange('departmentIdpk', null)
+          }}
+          options={categories
+            .filter((c) => c.categoryStatus !== false)
+            .map((c) => ({ value: String(c.idpk), label: c.categoryName }))}
+          disabled={isSubmitting}
+          placeholder="Search categories…"
+          emptyListMessage="No categories"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <SearchableSelect
+            id="departmentIdpk"
+            label={
+              <span>
+                Department <span className="font-normal text-neutral-500">(optional)</span>
+              </span>
+            }
+            value={formData.departmentIdpk != null ? String(formData.departmentIdpk) : ''}
+            onChange={(v) => handleInputChange('departmentIdpk', v ? parseInt(v, 10) : null)}
+            options={departments.map((d) => ({
+              value: String(d.idpk),
+              label: departmentDisplayName(d),
+            }))}
+            disabled={isSubmitting || !formData.departmentCategoryIdpk || departmentsLoading}
+            placeholder={
+              !formData.departmentCategoryIdpk
+                ? 'Pick a category first…'
+                : departmentsLoading
+                  ? 'Loading departments…'
+                  : 'Search departments…'
+            }
+            emptyListMessage={
+              formData.departmentCategoryIdpk ? 'No departments for this category' : 'Select a category first'
+            }
+          />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <SearchableSelect
+          id="locationIdpk"
+          label={
+            <span>
+              Location / site <span className="font-normal text-neutral-500">(optional)</span>
+            </span>
+          }
+          value={formData.locationIdpk != null ? String(formData.locationIdpk) : ''}
+          onChange={(v) => handleInputChange('locationIdpk', v ? parseInt(v, 10) : null)}
+          options={locations.map((loc) => ({
+            value: String(loc.idpk),
+            label: [loc.locPrefix, loc.locName].filter(Boolean).join(' — ') || `Location #${loc.idpk}`,
+          }))}
+          disabled={isSubmitting}
+          placeholder="Search locations…"
+          emptyListMessage="No locations"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

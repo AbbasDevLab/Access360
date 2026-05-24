@@ -10,6 +10,7 @@ export interface GuestVisit {
   visitorTypeId?: number | null
   departmentCategoryIdpk?: number | null
   departmentIdpk?: number | null
+  locationIdpk?: number | null
   timeIn?: string | null
   timeOut?: string | null
   maxTimeMinutes?: number | null
@@ -34,6 +35,7 @@ export interface CreateGuestVisitDto {
   VisitorTypeId?: number | null
   DepartmentCategoryIdpk?: number | null
   DepartmentIdpk?: number | null
+  LocationIdpk?: number | null
   TimeIn?: string | null
   MaxTimeMinutes?: number | null
   Notes?: string | null
@@ -48,6 +50,7 @@ export interface UpdateGuestVisitDto {
   VisitorTypeId?: number | null
   DepartmentCategoryIdpk?: number | null
   DepartmentIdpk?: number | null
+  LocationIdpk?: number | null
   TimeIn?: string | null
   TimeOut?: string | null
   MaxTimeMinutes?: number | null
@@ -184,6 +187,7 @@ export const createGuestVisit = async (visit: Partial<GuestVisit>): Promise<any>
       VisitorTypeId: visit.visitorTypeId || null,
       DepartmentCategoryIdpk: visit.departmentCategoryIdpk || null,
       DepartmentIdpk: visit.departmentIdpk || null,
+      LocationIdpk: visit.locationIdpk ?? null,
       TimeIn: visit.timeIn || new Date().toISOString(),
       MaxTimeMinutes: visit.maxTimeMinutes || null,
       Notes: visit.notes || null,

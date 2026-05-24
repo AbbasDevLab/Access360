@@ -77,26 +77,26 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
     }
   }
 
-  if (loading) return <div className="text-neutral-300">Loading pending requests...</div>
-  if (pending.length === 0) return <div className="text-neutral-400">No pending requests</div>
+  if (loading) return <div className="text-neutral-600">Loading pending requests...</div>
+  if (pending.length === 0) return <div className="text-neutral-500">No pending requests</div>
 
   return (
     <div className="space-y-3">
       {pending.map((req) => (
         <div
           key={req.id}
-          className="flex items-center justify-between rounded bg-neutral-700 px-4 py-3 border border-neutral-600"
+          className="flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"
         >
           <div>
-            <div className="font-semibold text-neutral-100">{req.guestFullName}</div>
-            <div className="text-sm text-neutral-300">
+            <div className="font-semibold text-neutral-900">{req.guestFullName}</div>
+            <div className="text-sm text-neutral-600">
               {req.departmentName} · {req.visitDate.substring(0, 10)} {req.visitTime}
             </div>
-            <div className="text-xs text-neutral-400 mt-1">
+            <div className="text-xs text-neutral-500 mt-1">
               Faculty: <span>{req.facultyFullName ?? 'Unknown faculty'}</span>
             </div>
             {req.visitPurpose && (
-              <div className="text-xs text-neutral-400 mt-1">
+              <div className="text-xs text-neutral-500 mt-1">
                 Purpose: {req.visitPurpose}
               </div>
             )}
@@ -128,13 +128,13 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
             }}
             aria-hidden
           />
-          <div className="relative w-full max-w-lg rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-2xl shadow-black/60">
-            <h3 className="text-lg font-semibold text-neutral-100">Reject request</h3>
-            <p className="mt-1 text-sm text-neutral-400">
+          <div className="relative w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl shadow-black/60">
+            <h3 className="text-lg font-semibold text-neutral-900">Reject request</h3>
+            <p className="mt-1 text-sm text-neutral-500">
               Optional: add a note so the faculty knows why it was rejected.
             </p>
 
-            <label htmlFor="reject-note" className="mt-4 block text-sm font-medium text-neutral-200">
+            <label htmlFor="reject-note" className="mt-4 block text-sm font-medium text-neutral-800">
               Rejection note (optional)
             </label>
             <textarea
@@ -142,7 +142,7 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
               value={rejectNote}
               onChange={(e) => setRejectNote(e.target.value)}
               rows={4}
-              className="mt-2 w-full rounded-xl border border-neutral-700 bg-neutral-950/60 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+              className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-red-500/40"
               placeholder="e.g. CNIC mismatch, incomplete details, wrong date/time, policy reason…"
             />
 
@@ -153,7 +153,7 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
                   setRejectingId(null)
                   setRejectNote('')
                 }}
-                className="rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-neutral-200 hover:bg-neutral-800"
+                className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-800"
               >
                 Cancel
               </button>
@@ -171,4 +171,5 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
     </div>
   )
 }
+
 

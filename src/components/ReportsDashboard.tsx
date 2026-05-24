@@ -43,6 +43,7 @@ interface ReportData {
   id: string
   visitorName: string
   cnic: string
+  phone: string
   visitorType: string
   site: string
   purpose: string
@@ -53,6 +54,19 @@ interface ReportData {
   duration?: number
   /** 0–23 from visit timeIn in PKT (peak-hour charts) */
   entryHour24?: number
+}
+
+function guestPhoneFromVisit(visit: GuestVisit): string {
+  const g = visit.guest as Record<string, unknown> | undefined | null
+  if (!g || typeof g !== 'object') return 'N/A'
+  const raw =
+    g.phoneNumber ??
+    g.PhoneNumber ??
+    g.phone ??
+    g.Phone ??
+    ''
+  const s = String(raw).trim()
+  return s.length > 0 ? s : 'N/A'
 }
 
 function reportVisitRowStatus(visit: GuestVisit): ReportData['status'] {
@@ -80,6 +94,7 @@ function convertVisitToReportData(visit: GuestVisit): ReportData {
     id: visit.idpk.toString(),
     visitorName: visit.guest?.fullName || 'Unknown',
     cnic: visit.guest?.cnicNumber || 'N/A',
+    phone: guestPhoneFromVisit(visit),
     visitorType: visit.visitorType?.vTypeName || 'N/A',
     site: visit.departmentCategory?.categoryName || visit.department?.departmentName || 'N/A',
     purpose: visit.visitPurpose || 'N/A',
@@ -295,10 +310,11 @@ export default function ReportsDashboard(): React.JSX.Element {
     const data =
       activeTab === 'live' ? liveRecords : activeTab === 'analytics' ? chartRecords : dailyRecords
     const csvContent = [
-      ['Name', 'CNIC', 'Type', 'Site', 'Purpose', 'Card', 'Entry Time', 'Exit Time', 'Duration (min)', 'Status'],
+      ['Name', 'CNIC', 'Phone', 'Type', 'Site', 'Purpose', 'Card', 'Entry Time', 'Exit Time', 'Duration (min)', 'Status'],
       ...data.map(record => [
         record.visitorName,
         record.cnic,
+        record.phone,
         record.visitorType,
         record.site,
         record.purpose,
@@ -322,13 +338,13 @@ export default function ReportsDashboard(): React.JSX.Element {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/25'
+        return 'bg-emerald-50 text-emerald-800 border border-emerald-200'
       case 'completed':
-        return 'bg-blue-500/15 text-blue-200 border border-blue-500/25'
+        return 'bg-blue-50 text-blue-800 border border-blue-200'
       case 'lost_card':
-        return 'bg-red-500/15 text-red-200 border border-red-500/25'
+        return 'bg-red-50 text-red-800 border border-red-200'
       default:
-        return 'bg-neutral-700 text-neutral-200 border border-neutral-600'
+        return 'bg-neutral-100 text-neutral-700 border border-neutral-200'
     }
   }
 
@@ -355,7 +371,7 @@ export default function ReportsDashboard(): React.JSX.Element {
             type="date"
             value={dateRange.start}
             onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-            className="rounded-lg border border-neutral-600 bg-neutral-800/80 text-neutral-100 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            className="rounded-lg border border-neutral-600 bg-white text-neutral-900 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00A651]"
           />
           <label className="sr-only" htmlFor="report-range-end">
             End date
@@ -365,12 +381,12 @@ export default function ReportsDashboard(): React.JSX.Element {
             type="date"
             value={dateRange.end}
             onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-            className="rounded-lg border border-neutral-600 bg-neutral-800/80 text-neutral-100 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+            className="rounded-lg border border-neutral-600 bg-white text-neutral-900 px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00A651]"
           />
           <button
             type="button"
             onClick={exportToExcel}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#00A651] px-3 py-2 text-sm font-medium text-white hover:bg-[#009148] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
           >
             <DocumentArrowDownIcon className="h-4 w-4 shrink-0" aria-hidden />
             Export CSV
@@ -380,7 +396,7 @@ export default function ReportsDashboard(): React.JSX.Element {
     >
       <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-1 border-b border-neutral-700" role="tablist" aria-label="Report views">
+      <div className="flex flex-wrap gap-1 border-b border-neutral-200" role="tablist" aria-label="Report views">
         {[
           { id: 'live', label: 'Live', icon: ClockIcon },
           { id: 'daily', label: 'Daily', icon: CalendarIcon },
@@ -395,8 +411,8 @@ export default function ReportsDashboard(): React.JSX.Element {
             onClick={() => setActiveTab(tab.id as 'live' | 'daily' | 'monthly' | 'analytics')}
             className={`flex items-center gap-2 rounded-t-md px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
-                ? 'border-blue-400 text-blue-300 bg-neutral-800/50'
-                : 'border-transparent text-neutral-400 hover:bg-neutral-800/30 hover:text-neutral-200'
+                ? 'border-blue-400 text-blue-300 bg-white'
+                : 'border-transparent text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700'
             }`}
           >
             <tab.icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -406,14 +422,14 @@ export default function ReportsDashboard(): React.JSX.Element {
       </div>
 
       {loadError && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           Could not load report data: {loadError}
         </div>
       )}
 
       {loading && (
         <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-neutral-600 border-t-blue-400"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-neutral-600 border-t-[#00A651]"></div>
           <p className="mt-2 text-sm text-neutral-400">Loading data...</p>
         </div>
       )}
@@ -422,39 +438,40 @@ export default function ReportsDashboard(): React.JSX.Element {
       {!loading && activeTab === 'live' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-4">
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
               <div className="flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-emerald-400" />
-                <span className="text-sm font-medium text-neutral-200">Active (on site)</span>
+                <span className="text-sm font-medium text-neutral-700">Active (on site)</span>
               </div>
-              <div className="text-2xl font-bold text-white mt-1">{liveRecords.length}</div>
+              <div className="text-2xl font-bold text-neutral-900 mt-1">{liveRecords.length}</div>
               <p className="text-xs text-neutral-500 mt-1">Open visits from the server (no checkout yet).</p>
             </div>
-            <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-4">
+            <div className="rounded-lg border border-neutral-200 bg-white p-4">
               <div className="flex items-center gap-2">
                 <UserGroupIcon className="w-5 h-5 text-blue-400" />
-                <span className="text-sm font-medium text-neutral-200">Check-ins today</span>
+                <span className="text-sm font-medium text-neutral-700">Check-ins today</span>
               </div>
-              <div className="text-2xl font-bold text-white mt-1">{todayVisitsCount}</div>
+              <div className="text-2xl font-bold text-neutral-900 mt-1">{todayVisitsCount}</div>
               <p className="text-xs text-neutral-500 mt-1">Visits whose entry date is today in PKT (can differ from “active” if they checked in before midnight PKT).</p>
             </div>
-            <div className="rounded-lg border border-violet-500/25 bg-violet-950/30 p-4">
+            <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
               <div className="flex items-center gap-2">
                 <ClockIcon className="w-5 h-5 text-violet-400" />
-                <span className="text-sm font-medium text-violet-200">Longest current stay</span>
+                <span className="text-sm font-medium text-violet-800">Longest current stay</span>
               </div>
-              <div className="text-2xl font-bold text-violet-100 mt-1">
+              <div className="text-2xl font-bold text-violet-900 mt-1">
                 {longestOpenStayMinutes != null ? formatDurationMinutes(longestOpenStayMinutes) : '—'}
               </div>
-              <p className="text-xs text-violet-200/70 mt-1">Among visitors still checked in (open visits).</p>
+              <p className="text-xs text-violet-800/70 mt-1">Among visitors still checked in (open visits).</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-neutral-700 bg-neutral-800/50 overflow-hidden">
-            <div className="px-4 py-3 bg-neutral-800 border-b border-neutral-700">
-              <div className="grid grid-cols-8 gap-2 text-xs font-medium text-neutral-400 uppercase tracking-wide">
+          <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
+            <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200 min-w-[720px]">
+              <div className="grid grid-cols-9 gap-2 text-xs font-semibold text-neutral-700 uppercase tracking-wide">
                 <div className="min-w-0">Name</div>
                 <div className="min-w-0">CNIC</div>
+                <div className="min-w-0">Phone</div>
                 <div className="min-w-0">Type</div>
                 <div className="min-w-0">Site</div>
                 <div className="min-w-0">Card</div>
@@ -463,19 +480,20 @@ export default function ReportsDashboard(): React.JSX.Element {
                 <div className="min-w-0">Status</div>
               </div>
             </div>
-            <div className="divide-y divide-neutral-700">
+            <div className="divide-y divide-neutral-200 min-w-[720px]">
               {liveRecords.length === 0 ? (
                 <div className="px-4 py-8 text-center text-neutral-500">No active visitors</div>
               ) : (
                 liveRecords.map((record) => (
-                  <div key={record.id} className="px-4 py-3 grid grid-cols-8 gap-2 text-sm hover:bg-neutral-800/80 items-start">
-                    <div className="font-medium text-neutral-100 min-w-0 break-words">{record.visitorName}</div>
-                    <div className="text-neutral-400 min-w-0 break-words">{record.cnic}</div>
-                    <div className="text-neutral-400 min-w-0 break-words">{record.visitorType}</div>
-                    <div className="text-neutral-400 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
-                    <div className="font-mono text-neutral-300 min-w-0 break-all">{record.cardNumber}</div>
-                    <div className="text-neutral-400 min-w-0 whitespace-nowrap">{record.entryTime}</div>
-                    <div className="text-neutral-400 min-w-0">{formatDurationMinutes(record.duration)}</div>
+                  <div key={record.id} className="px-4 py-3 grid grid-cols-9 gap-2 text-sm hover:bg-white items-start">
+                    <div className="font-medium text-neutral-900 min-w-0 break-words">{record.visitorName}</div>
+                    <div className="text-neutral-900 min-w-0 break-words">{record.cnic}</div>
+                    <div className="text-neutral-900 min-w-0 break-all">{record.phone}</div>
+                    <div className="text-neutral-900 min-w-0 break-words">{record.visitorType}</div>
+                    <div className="text-neutral-900 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
+                    <div className="font-mono text-neutral-900 min-w-0 break-all">{record.cardNumber}</div>
+                    <div className="text-neutral-900 min-w-0 whitespace-nowrap">{record.entryTime}</div>
+                    <div className="text-neutral-900 min-w-0">{formatDurationMinutes(record.duration)}</div>
                     <div className="min-w-0">
                       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
                         {getStatusIcon(record.status)}
@@ -493,11 +511,12 @@ export default function ReportsDashboard(): React.JSX.Element {
       {/* Daily Report */}
       {!loading && activeTab === 'daily' && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-neutral-700 bg-neutral-800/50 overflow-hidden">
-            <div className="px-4 py-3 bg-neutral-800 border-b border-neutral-700">
-              <div className="grid grid-cols-9 gap-2 text-xs font-medium text-neutral-400 uppercase tracking-wide">
+          <div className="rounded-xl border border-neutral-200 bg-white overflow-x-auto">
+            <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200 min-w-[900px]">
+              <div className="grid grid-cols-10 gap-2 text-xs font-semibold text-neutral-700 uppercase tracking-wide">
                 <div className="min-w-0">Name</div>
                 <div className="min-w-0">CNIC</div>
+                <div className="min-w-0">Phone</div>
                 <div className="min-w-0">Type</div>
                 <div className="min-w-0">Site</div>
                 <div className="min-w-0">Purpose</div>
@@ -507,21 +526,22 @@ export default function ReportsDashboard(): React.JSX.Element {
                 <div className="min-w-0">Stay</div>
               </div>
             </div>
-            <div className="divide-y divide-neutral-700">
+            <div className="divide-y divide-neutral-200 min-w-[900px]">
               {dailyRecords.length === 0 ? (
                 <div className="px-4 py-8 text-center text-neutral-500">No records found for selected date range</div>
               ) : (
                 dailyRecords.map((record) => (
-                  <div key={record.id} className="px-4 py-3 grid grid-cols-9 gap-2 text-sm hover:bg-neutral-800/80 items-start">
-                    <div className="font-medium text-neutral-100 min-w-0 break-words">{record.visitorName}</div>
-                    <div className="text-neutral-400 min-w-0 break-words">{record.cnic}</div>
-                    <div className="text-neutral-400 min-w-0 break-words">{record.visitorType}</div>
-                    <div className="text-neutral-400 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
-                    <div className="text-neutral-400 min-w-0 break-words">{record.purpose}</div>
-                    <div className="font-mono text-neutral-300 min-w-0 break-all">{record.cardNumber}</div>
-                    <div className="text-neutral-400 min-w-0 whitespace-nowrap">{record.entryTime}</div>
-                    <div className="text-neutral-400 min-w-0 whitespace-nowrap">{record.exitTime || '—'}</div>
-                    <div className="text-neutral-400 min-w-0">{formatDurationMinutes(record.duration)}</div>
+                  <div key={record.id} className="px-4 py-3 grid grid-cols-10 gap-2 text-sm hover:bg-white items-start">
+                    <div className="font-medium text-neutral-900 min-w-0 break-words">{record.visitorName}</div>
+                    <div className="text-neutral-900 min-w-0 break-words">{record.cnic}</div>
+                    <div className="text-neutral-900 min-w-0 break-all">{record.phone}</div>
+                    <div className="text-neutral-900 min-w-0 break-words">{record.visitorType}</div>
+                    <div className="text-neutral-900 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
+                    <div className="text-neutral-900 min-w-0 break-words">{record.purpose}</div>
+                    <div className="font-mono text-neutral-900 min-w-0 break-all">{record.cardNumber}</div>
+                    <div className="text-neutral-900 min-w-0 whitespace-nowrap">{record.entryTime}</div>
+                    <div className="text-neutral-900 min-w-0 whitespace-nowrap">{record.exitTime || '—'}</div>
+                    <div className="text-neutral-900 min-w-0">{formatDurationMinutes(record.duration)}</div>
                   </div>
                 ))
               )}
@@ -533,63 +553,63 @@ export default function ReportsDashboard(): React.JSX.Element {
       {/* Monthly Analytics */}
       {!loading && activeTab === 'monthly' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-6">
+          <div className="rounded-lg border border-neutral-200 bg-white p-6">
             <div className="flex items-center gap-3">
               <UserGroupIcon className="w-8 h-8 text-blue-400" />
               <div>
                 <div className="text-sm font-medium text-neutral-400">Total visitors (month)</div>
-                <div className="text-3xl font-bold text-white">{monthlyStats.totalVisitors}</div>
+                <div className="text-3xl font-bold text-neutral-900">{monthlyStats.totalVisitors}</div>
               </div>
             </div>
           </div>
           
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-6">
+          <div className="rounded-lg border border-neutral-200 bg-white p-6">
             <div className="flex items-center gap-3">
               <CalendarIcon className="w-8 h-8 text-emerald-400" />
               <div>
                 <div className="text-sm font-medium text-neutral-400">Avg daily</div>
-                <div className="text-3xl font-bold text-white">{monthlyStats.avgDailyVisitors}</div>
+                <div className="text-3xl font-bold text-neutral-900">{monthlyStats.avgDailyVisitors}</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-6">
+          <div className="rounded-lg border border-neutral-200 bg-white p-6">
             <div className="flex items-center gap-3">
               <ClockIcon className="w-8 h-8 text-violet-400" />
               <div>
                 <div className="text-sm font-medium text-neutral-400">Peak hour (PKT)</div>
-                <div className="text-2xl font-bold text-white">{monthlyStats.peakHour}</div>
+                <div className="text-2xl font-bold text-neutral-900">{monthlyStats.peakHour}</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-6">
+          <div className="rounded-lg border border-neutral-200 bg-white p-6">
             <div className="flex items-center gap-3">
               <ChartBarIcon className="w-8 h-8 text-amber-400" />
               <div className="min-w-0">
                 <div className="text-sm font-medium text-neutral-400">Most visited</div>
-                <div className="text-lg font-bold text-white break-words">{monthlyStats.mostVisitedSite}</div>
+                <div className="text-lg font-bold text-neutral-900 break-words">{monthlyStats.mostVisitedSite}</div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-red-500/25 bg-red-500/10 p-6">
+          <div className="rounded-lg border border-red-500/25 bg-red-50 p-6">
             <div className="flex items-center gap-3">
               <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
               <div>
-                <div className="text-sm font-medium text-red-200/80">Cards not returned</div>
-                <div className="text-3xl font-bold text-red-100">{monthlyStats.lostCards}</div>
-                <p className="mt-1 text-xs text-red-200/60">Completed check-outs this month (PKT) where the guard marked the RFID as not returned.</p>
+                <div className="text-sm font-medium text-red-800/80">Cards not returned</div>
+                <div className="text-3xl font-bold text-red-900">{monthlyStats.lostCards}</div>
+                <p className="mt-1 text-xs text-red-800/60">Completed check-outs this month (PKT) where the guard marked the RFID as not returned.</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-neutral-700 bg-neutral-800/80 p-6">
+          <div className="rounded-lg border border-neutral-200 bg-white p-6">
             <div className="flex items-center gap-3">
               <ClockIcon className="w-8 h-8 text-indigo-400" />
               <div>
                 <div className="text-sm font-medium text-neutral-400">Avg visit length</div>
-                <div className="text-2xl font-bold text-white">{formatDurationMinutes(monthlyStats.avgVisitDuration)}</div>
+                <div className="text-2xl font-bold text-neutral-900">{formatDurationMinutes(monthlyStats.avgVisitDuration)}</div>
               </div>
             </div>
           </div>
@@ -600,18 +620,18 @@ export default function ReportsDashboard(): React.JSX.Element {
       {!loading && activeTab === 'analytics' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border border-neutral-700 bg-neutral-800/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-4 text-neutral-100">Visitor types (this month)</h3>
+            <div className="border border-neutral-200 bg-white rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4 text-neutral-900">Visitor types (this month)</h3>
               <div className="space-y-3">
                 {visitorTypeDistribution.map((item, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div className="w-3 h-3 rounded-full bg-blue-400 shrink-0"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between text-sm text-neutral-200 gap-2">
+                      <div className="flex justify-between text-sm text-neutral-700 gap-2">
                         <span className="truncate">{item.type}</span>
                         <span className="shrink-0">{item.count} ({item.percentage}%)</span>
                       </div>
-                      <div className="w-full bg-neutral-700 rounded-full h-2 mt-1">
+                      <div className="w-full bg-neutral-200 rounded-full h-2 mt-1">
                         <div 
                           className="bg-blue-500 h-2 rounded-full" 
                           style={{ width: `${item.percentage}%` }}
@@ -626,8 +646,8 @@ export default function ReportsDashboard(): React.JSX.Element {
               </div>
             </div>
 
-            <div className="border border-neutral-700 bg-neutral-800/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-4 text-neutral-100">Peak hours (PKT)</h3>
+            <div className="border border-neutral-200 bg-white rounded-xl p-6">
+              <h3 className="text-lg font-semibold mb-4 text-neutral-900">Peak hours (PKT)</h3>
               <div className="space-y-3">
                 {peakHoursChart.map((item, index) => {
                   const maxCount = peakHoursChart[0]?.count || 1
@@ -635,10 +655,10 @@ export default function ReportsDashboard(): React.JSX.Element {
                     <div key={index} className="flex items-center gap-3">
                       <div className="w-28 shrink-0 text-sm text-neutral-400">{item.hour}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between text-sm text-neutral-200">
+                        <div className="flex justify-between text-sm text-neutral-700">
                           <span>{item.count} visitors</span>
                         </div>
-                        <div className="w-full bg-neutral-700 rounded-full h-2 mt-1">
+                        <div className="w-full bg-neutral-200 rounded-full h-2 mt-1">
                           <div 
                             className="bg-emerald-500 h-2 rounded-full" 
                             style={{ width: `${(item.count / maxCount) * 100}%` }}
@@ -660,4 +680,5 @@ export default function ReportsDashboard(): React.JSX.Element {
     </PageLayout>
   )
 }
+
 

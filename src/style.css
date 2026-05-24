@@ -16,164 +16,25 @@ body,
   }
 }
 
-/* ---- Design tokens (admin portal) ---- */
+/* ---- Access360 desk theme (admin portal + guard counter) ---- */
 .portal-theme {
-  --app-bg: #070b14;
-  --app-surface: #0f172a;
-  --app-elevated: #111827;
-  --app-border: #1e293b;
-  --app-muted: #94a3b8;
-  --app-text: #e2e8f0;
-  --app-accent: #3b82f6;
-  --app-accent-hover: #2563eb;
-  --app-ring: rgba(59, 130, 246, 0.45);
-  background-color: var(--app-bg);
-  color: var(--app-text);
+  --desk-bg: #e8eaed;
+  --desk-surface: #ffffff;
+  --desk-border: #e5e5e5;
+  --desk-text: #171717;
+  --desk-muted: #737373;
+  --desk-accent: #00a651;
+  --desk-accent-hover: #009148;
+  --desk-info: #2563eb;
+  --desk-danger: #ed1c24;
+  --desk-ring: rgba(0, 166, 81, 0.25);
+  background-color: var(--desk-bg);
+  color: var(--desk-text);
 }
 
 .portal-theme :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--app-ring);
+  outline: 2px solid var(--desk-ring);
   outline-offset: 2px;
-}
-
-/* Unified portal theme (admin + main app routes) */
-.portal-theme {
-  background-color: var(--app-bg);
-  color: var(--app-text);
-}
-
-.portal-theme .bg-white {
-  background-color: var(--app-elevated) !important;
-}
-
-.portal-theme .border-neutral-200 {
-  border-color: var(--app-border) !important;
-}
-
-.portal-theme .text-neutral-900 {
-  color: #f8fafc !important;
-}
-
-.portal-theme .text-neutral-700 {
-  color: #e2e8f0 !important;
-}
-
-.portal-theme .text-neutral-600 {
-  color: var(--app-muted) !important;
-}
-
-.portal-theme input,
-.portal-theme select,
-.portal-theme textarea {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-  color: var(--app-text) !important;
-}
-
-.portal-theme input::placeholder,
-.portal-theme textarea::placeholder {
-  color: #64748b !important;
-}
-
-.portal-theme table {
-  background-color: var(--app-elevated) !important;
-  color: var(--app-text) !important;
-}
-
-.portal-theme thead {
-  background-color: #0b1220 !important;
-}
-
-.portal-theme tbody {
-  background-color: var(--app-elevated) !important;
-}
-
-/* Ensure readable text on white fields inside portal theme */
-.portal-theme input.bg-white,
-.portal-theme select.bg-white,
-.portal-theme textarea.bg-white,
-.portal-theme .bg-white input,
-.portal-theme .bg-white select,
-.portal-theme .bg-white textarea {
-  color: #0f172a !important;
-}
-
-/*
- * Guard counter embedded under admin portal (e.g. /counter/check-in).
- * .portal-theme globally forces .bg-white and inputs to dark surfaces; this subtree
- * restores the same light look as /guard/dashboard.
- */
-.portal-theme .guard-desk-theme {
-  color: #171717;
-}
-
-.portal-theme .guard-desk-theme .bg-white {
-  background-color: #ffffff !important;
-}
-
-.portal-theme .guard-desk-theme .border-neutral-200 {
-  border-color: rgb(229 231 235) !important;
-}
-
-.portal-theme .guard-desk-theme .border-neutral-300 {
-  border-color: rgb(212 212 212) !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-900 {
-  color: #171717 !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-800 {
-  color: rgb(38 38 38) !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-700 {
-  color: rgb(64 64 64) !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-600 {
-  color: rgb(82 82 82) !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-500 {
-  color: rgb(115 115 115) !important;
-}
-
-.portal-theme .guard-desk-theme .text-neutral-400 {
-  color: rgb(163 163 163) !important;
-}
-
-.portal-theme .guard-desk-theme input:not([type="checkbox"]):not([type="radio"]),
-.portal-theme .guard-desk-theme select,
-.portal-theme .guard-desk-theme textarea {
-  background-color: #ffffff !important;
-  border-color: rgb(229 231 235) !important;
-  color: #171717 !important;
-}
-
-.portal-theme .guard-desk-theme input::placeholder,
-.portal-theme .guard-desk-theme textarea::placeholder {
-  color: rgb(163 163 163) !important;
-}
-
-.portal-theme .guard-desk-theme .bg-neutral-50 {
-  background-color: rgb(250 250 250) !important;
-}
-
-.portal-theme .guard-desk-theme .bg-neutral-50\/50 {
-  background-color: rgb(250 250 250 / 0.5) !important;
-}
-
-.portal-theme .guard-desk-theme .bg-neutral-50\/80 {
-  background-color: rgb(250 250 250 / 0.8) !important;
-}
-
-.portal-theme .guard-desk-theme .bg-neutral-100 {
-  background-color: rgb(245 245 245) !important;
-}
-
-.portal-theme .guard-desk-theme button.border-neutral-200.bg-white {
-  background-color: #ffffff !important;
 }
 
 /* Urdu font styling */

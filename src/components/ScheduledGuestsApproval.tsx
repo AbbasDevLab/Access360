@@ -59,36 +59,36 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
   const rejectedGuests = scheduledGuests.filter(g => g.status === 'Rejected')
 
   if (isLoading) {
-    return <div className="text-neutral-300 text-center py-8">Loading...</div>
+    return <div className="text-neutral-600 text-center py-8">Loading...</div>
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-neutral-700 rounded-xl shadow-lg p-6 space-y-8">
-        <h2 className="text-2xl font-bold text-neutral-100 mb-2">Scheduled Guests Approval</h2>
+      <div className="rounded-[20px] bg-white shadow-md shadow-black/8 ring-1 ring-black/5 p-6 space-y-8">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Scheduled Guests Approval</h2>
 
         {/* Pending Faculty Visit Requests (from new API) */}
         <section>
-          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Pending Faculty Visit Requests</h3>
+          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Pending Faculty Visit Requests</h3>
           <AdminScheduledGuestsPending />
         </section>
 
         {/* Existing Pending Scheduled Guests */}
         <section>
-          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Pending Scheduled Guests ({pendingGuests.length})</h3>
+          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Pending Scheduled Guests ({pendingGuests.length})</h3>
           {pendingGuests.length === 0 ? (
-            <p className="text-neutral-400">No pending scheduled guest requests</p>
+            <p className="text-neutral-500">No pending scheduled guest requests</p>
           ) : (
             <div className="space-y-3">
               {pendingGuests.map((guest) => (
-                <div key={guest.idpk} className="bg-neutral-600 rounded-lg p-4 border border-yellow-500/30">
+                <div key={guest.idpk} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 border border-yellow-500/30">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h4 className="text-lg font-semibold text-neutral-100">{guest.guestFullName}</h4>
+                        <h4 className="text-lg font-semibold text-neutral-900">{guest.guestFullName}</h4>
                         <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs font-medium">Pending</span>
                       </div>
-                      <div className="grid md:grid-cols-2 gap-2 text-sm text-neutral-300 mb-3">
+                      <div className="grid md:grid-cols-2 gap-2 text-sm text-neutral-600 mb-3">
                         <div><strong>CNIC:</strong> {guest.guestCNIC}</div>
                         <div><strong>Phone:</strong> {guest.guestPhone}</div>
                         {guest.carNumber && <div><strong>Car Number:</strong> {guest.carNumber}</div>}
@@ -106,12 +106,12 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
                         )}
                       </div>
                       {showRejectModal === guest.idpk && (
-                        <div className="mt-3 p-3 bg-neutral-700 rounded border border-neutral-500">
-                          <label className="block text-sm font-medium text-neutral-200 mb-2">Rejection Reason:</label>
+                        <div className="mt-3 p-3 rounded-xl border border-neutral-200 bg-white border-neutral-500">
+                          <label className="block text-sm font-medium text-neutral-800 mb-2">Rejection Reason:</label>
                           <textarea
                             value={rejectReason[guest.idpk] || ''}
                             onChange={(e) => setRejectReason({ ...rejectReason, [guest.idpk]: e.target.value })}
-                            className="w-full px-3 py-2 bg-neutral-600 border border-neutral-500 rounded text-neutral-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full px-3 py-2 bg-neutral-600 border border-neutral-500 rounded text-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-500"
                             rows={2}
                             placeholder="Enter reason for rejection..."
                           />
@@ -127,7 +127,7 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
                                 setShowRejectModal(null)
                                 setRejectReason({ ...rejectReason, [guest.idpk]: '' })
                               }}
-                              className="px-4 py-1 bg-neutral-500 hover:bg-neutral-400 text-neutral-100 rounded text-sm"
+                              className="px-4 py-1 bg-neutral-500 hover:bg-neutral-400 text-neutral-900 rounded text-sm"
                             >
                               Cancel
                             </button>
@@ -138,7 +138,7 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
                     <div className="flex flex-col gap-2 ml-4">
                       <button
                         onClick={() => handleApprove(guest.idpk)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#00A651] hover:bg-[#009148] text-white rounded-lg text-sm font-medium"
                       >
                         <CheckCircleIcon className="w-5 h-5" />
                         Approve
@@ -160,24 +160,24 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
 
         {/* Approved Faculty Visit Requests (new endpoint) */}
         <section>
-          <h3 className="text-lg font-semibold text-neutral-200 mb-3">Approved Faculty Visit Requests</h3>
+          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Approved Faculty Visit Requests</h3>
           <AdminScheduledGuestsApproved />
         </section>
 
         {/* Rejected Requests */}
         {rejectedGuests.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold text-neutral-200 mb-3">Rejected ({rejectedGuests.length})</h3>
+            <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected ({rejectedGuests.length})</h3>
             <div className="space-y-2">
               {rejectedGuests.slice(0, 5).map((guest) => (
-                <div key={guest.idpk} className="bg-neutral-600 rounded-lg p-3 border border-red-500/30">
+                <div key={guest.idpk} className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 border border-red-500/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-semibold text-neutral-100">{guest.guestFullName}</span>
+                      <span className="font-semibold text-neutral-900">{guest.guestFullName}</span>
                       {guest.rejectionReason && (
                         <span className="ml-3 text-sm text-red-300">Reason: {guest.rejectionReason}</span>
                       )}
-                      <div className="text-xs text-neutral-300 mt-1">
+                      <div className="text-xs text-neutral-600 mt-1">
                         Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk}) • Purpose: {guest.purpose}
                       </div>
                     </div>
@@ -192,4 +192,5 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
     </div>
   )
 }
+
 

@@ -4,6 +4,7 @@ import { createGuard } from '../services/guardsApi'
 import { getAllLocations } from '../services/locationsApi'
 import type { Guard, ApiError } from '../services/guardsApi'
 import type { Location } from '../services/locationsApi'
+import SearchableSelect from './SearchableSelect'
 
 interface GuardFormProps {
   onSuccess?: (guard: Guard) => void
@@ -215,25 +216,21 @@ export default function GuardForm({
           />
         </div>
 
-        <div className="grid gap-2">
-          <label htmlFor="guardLocationIdpk" className="text-sm font-medium text-neutral-700">
-            Location
-          </label>
-          <select
-            id="guardLocationIdpk"
-            value={formData.guardLocationIdpk || ''}
-            onChange={(e) => handleInputChange('guardLocationIdpk', e.target.value ? parseInt(e.target.value) : null)}
-            disabled={isSubmitting}
-            className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
-          >
-            <option value="">Select Location</option>
-            {locations.map((location) => (
-              <option key={location.idpk} value={location.idpk}>
-                {location.locName}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SearchableSelect
+          id="guardLocationIdpk"
+          label="Location"
+          labelClassName="text-sm font-medium text-neutral-700"
+          inputClassName="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed w-full"
+          value={formData.guardLocationIdpk != null ? String(formData.guardLocationIdpk) : ''}
+          onChange={(v) => handleInputChange('guardLocationIdpk', v ? parseInt(v, 10) : null)}
+          options={locations.map((location) => ({
+            value: String(location.idpk),
+            label: [location.locPrefix, location.locName].filter(Boolean).join(' — ') || `Location #${location.idpk}`,
+          }))}
+          disabled={isSubmitting}
+          placeholder="Search locations…"
+          emptyListMessage="No locations"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

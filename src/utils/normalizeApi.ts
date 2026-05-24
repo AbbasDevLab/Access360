@@ -25,6 +25,8 @@ const LIST_KEYS = [
   'VisitorTypes',
   'locations',
   'Locations',
+  'departments',
+  'Departments',
 ]
 
 const EXPLICIT_KEY_MAP: Record<string, string> = {

@@ -13,3 +13,11 @@ export function formatPakCnicInput(raw: string): string {
   if (digits.length <= 12) return `${digits.slice(0, 5)}-${digits.slice(5)}`
   return `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`
 }
+
+export function cnicDigitCount(formattedOrRaw: string): number {
+  return formattedOrRaw.replace(/\D/g, '').length
+}
+
+export function isCompletePakCnic(formattedOrRaw: string): boolean {
+  return cnicDigitCount(formattedOrRaw) === CNIC_MAX_DIGITS
+}

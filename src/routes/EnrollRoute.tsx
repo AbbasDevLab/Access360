@@ -11,6 +11,7 @@ import { extractTextFromImage } from '../services/ocrService'
 import type { Guest, ApiError } from '../services/guestsApi'
 import type { VisitorType } from '../services/visitorTypesApi'
 import type { DepartmentCategory } from '../services/departmentApi'
+import SearchableSelect from '../components/SearchableSelect'
 
 export async function loader() {
   return null
@@ -590,43 +591,45 @@ export default function EnrollRoute(): React.JSX.Element {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-neutral-200 mb-2">
-              Visitor Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formData.visitorTypeId}
-              onChange={(e) => handleInputChange('visitorTypeId', e.target.value)}
-              required
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-            >
-              <option value="">Select Visitor Type</option>
-              {visitorTypes.map((type) => (
-                <option key={type.idpk} value={type.idpk}>
-                  {type.vTypeName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableSelect
+            id="enroll-visitor-type"
+            label={
+              <span className="text-neutral-200">
+                Visitor Type <span className="text-red-500">*</span>
+              </span>
+            }
+            labelClassName="text-sm font-medium text-neutral-200"
+            inputClassName="w-full rounded-lg border border-neutral-300 px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            value={formData.visitorTypeId}
+            onChange={(v) => handleInputChange('visitorTypeId', v)}
+            options={visitorTypes.map((type) => ({
+              value: String(type.idpk),
+              label: type.vTypeName,
+            }))}
+            required
+            placeholder="Search visitor types…"
+            emptyListMessage="No visitor types"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-200 mb-2">
-              Destination <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formData.destinationId}
-              onChange={(e) => handleInputChange('destinationId', e.target.value)}
-              required
-              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
-            >
-              <option value="">Select Destination</option>
-              {destinations.map((dest) => (
-                <option key={dest.idpk} value={dest.idpk}>
-                  {dest.categoryName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SearchableSelect
+            id="enroll-destination"
+            label={
+              <span className="text-neutral-200">
+                Destination <span className="text-red-500">*</span>
+              </span>
+            }
+            labelClassName="text-sm font-medium text-neutral-200"
+            inputClassName="w-full rounded-lg border border-neutral-300 px-4 py-3 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            value={formData.destinationId}
+            onChange={(v) => handleInputChange('destinationId', v)}
+            options={destinations.map((dest) => ({
+              value: String(dest.idpk),
+              label: dest.categoryName,
+            }))}
+            required
+            placeholder="Search destinations…"
+            emptyListMessage="No destinations"
+          />
         </div>
 
         <div>

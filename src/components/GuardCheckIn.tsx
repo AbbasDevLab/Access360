@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeftIcon, CameraIcon, DocumentTextIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, CameraIcon, DocumentTextIcon, CheckCircleIcon, XCircleIcon, PencilSquareIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { createGuest, getGuestByCNIC } from '../services/guestsApi'
 import { createGuestVisit } from '../services/guestVisitApi'
 import { getAllVisitorTypes } from '../services/visitorTypesApi'
@@ -12,6 +12,7 @@ import { CNIC_MAX_INPUT_LENGTH, formatPakCnicInput, isCompletePakCnic } from '..
 import { formatPakMobileInput, isValidPakMobile, PAK_MOBILE_MAX_INPUT_LENGTH } from '../utils/phone'
 import CameraCapture from './CameraCapture'
 import SearchableSelect from './SearchableSelect'
+import { compressImageDataUrl } from '../utils/imageCompress'
 
 interface GuardCheckInProps {
   onBack: () => void
@@ -53,6 +54,9 @@ export default function GuardCheckIn({
 }: GuardCheckInProps): React.JSX.Element {
   const [step, setStep] = useState<'scan' | 'form'>('scan')
   const [capturedImage, setCapturedImage] = useState('')
+  const [cnicFrontImage, setCnicFrontImage] = useState('')
+  const [cnicBackImage, setCnicBackImage] = useState('')
+  const [backCaptureMode, setBackCaptureMode] = useState<'idle' | 'camera'>('idle')
   const [ocrProcessing, setOcrProcessing] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
@@ -109,6 +113,10 @@ export default function GuardCheckIn({
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
+
+      // Persist a compressed copy of the front image for later submission.
+      // OCR still runs against the original (better accuracy).
+      compressImageDataUrl(imageData).then(setCnicFrontImage)
 
       // Process OCR
       const ocrResult = await extractTextFromImage(imageData)
@@ -186,6 +194,18 @@ export default function GuardCheckIn({
     }
   }
 
+  const handleSkipToManual = () => {
+    // Clear any partial OCR / image state so the form starts clean
+    setCapturedImage('')
+    setCnicFrontImage('')
+    setOcrRawText('')
+    setOcrConfidence(undefined)
+    setOcrFilledFields(new Set())
+    setShowOcrResults(false)
+    setErrorMessage('')
+    setStep('form')
+  }
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -198,22 +218,72 @@ export default function GuardCheckIn({
     setSubmitStatus('idle')
     setErrorMessage('')
 
-    if (!isCompletePakCnic(formData.cnicNumber)) {
-      setErrorMessage('Enter the full 13-digit CNIC (#####-#######-#).')
+    // Safety net: SearchableSelect commits via document mousedown, which can
+    // race with the submit click. If the user typed a value but didn't pick
+    // from the dropdown, read the live input text and resolve it against the
+    // available options so validation doesn't reject a visible selection.
+    const resolveSelect = (
+      searchId: string,
+      currentId: string,
+      currentCustom: string,
+      opts: { value: string; label: string }[],
+    ): { id: string; custom: string } => {
+      if (currentId || currentCustom.trim()) return { id: currentId, custom: currentCustom }
+      const el = document.getElementById(searchId) as HTMLInputElement | null
+      const text = el?.value.trim() ?? ''
+      if (!text) return { id: '', custom: '' }
+      const exact = opts.find((o) => o.label.toLowerCase() === text.toLowerCase())
+      return exact ? { id: exact.value, custom: '' } : { id: '', custom: text }
+    }
+
+    const visitorOpts = visitorTypes
+      .filter((t) => t.vTypeStatus)
+      .map((t) => ({ value: String(t.idpk), label: t.vTypeName }))
+    const destinationOpts = destinations
+      .filter((c) => c.categoryStatus)
+      .map((d) => ({ value: String(d.idpk), label: d.categoryName }))
+
+    const vt = resolveSelect('guard-visitor-type-search', formData.visitorTypeId, formData.visitorTypeCustom, visitorOpts)
+    const dt = resolveSelect('guard-destination-search', formData.destinationId, formData.destinationCustom, destinationOpts)
+
+    // Apply the resolved values back to formData so downstream code sees them
+    const effectiveData = {
+      ...formData,
+      visitorTypeId: vt.id,
+      visitorTypeCustom: vt.custom,
+      destinationId: dt.id,
+      destinationCustom: dt.custom,
+    }
+    if (vt.id !== formData.visitorTypeId || vt.custom !== formData.visitorTypeCustom
+        || dt.id !== formData.destinationId || dt.custom !== formData.destinationCustom) {
+      setFormData(effectiveData)
+    }
+
+    console.log('[GuardCheckIn] Submit fired. effectiveData =', effectiveData)
+
+    const failValidation = (msg: string) => {
+      console.warn('[GuardCheckIn] Validation failed:', msg)
+      setErrorMessage(msg)
+      setSubmitStatus('error')
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
+    }
+
+    if (!isCompletePakCnic(effectiveData.cnicNumber)) {
+      failValidation('Enter the full 13-digit CNIC (#####-#######-#).')
       return
     }
-    if (!isValidPakMobile(formData.phoneNumber)) {
-      setErrorMessage('Enter a valid Pakistani mobile number: 11 digits starting with 03 (e.g. 0300-1234567).')
+    if (!isValidPakMobile(effectiveData.phoneNumber)) {
+      failValidation('Enter a valid Pakistani mobile number: 11 digits starting with 03 (e.g. 0300-1234567).')
       return
     }
-    const hasVisitorType = Boolean(formData.visitorTypeId) || formData.visitorTypeCustom.trim().length > 0
-    const hasDestination = Boolean(formData.destinationId) || formData.destinationCustom.trim().length > 0
+    const hasVisitorType = Boolean(effectiveData.visitorTypeId) || effectiveData.visitorTypeCustom.trim().length > 0
+    const hasDestination = Boolean(effectiveData.destinationId) || effectiveData.destinationCustom.trim().length > 0
     if (!hasVisitorType) {
-      setErrorMessage('Choose a visitor type from the list or enter a custom visitor type.')
+      failValidation('Choose a visitor type from the list or enter a custom visitor type.')
       return
     }
     if (!hasDestination) {
-      setErrorMessage('Choose a destination from the list or enter a custom destination.')
+      failValidation('Choose a destination from the list or enter a custom destination.')
       return
     }
 
@@ -230,43 +300,90 @@ export default function GuardCheckIn({
       } else {
         // Create new guest
         const newGuest = await createGuest({
-          fullName: formData.fullName,
-          fatherName: formData.fatherName,
-          cnicNumber: formatPakCnicInput(formData.cnicNumber),
-          phoneNumber: formatPakMobileInput(formData.phoneNumber),
+          fullName: effectiveData.fullName,
+          fatherName: effectiveData.fatherName,
+          cnicNumber: formatPakCnicInput(effectiveData.cnicNumber),
+          phoneNumber: formatPakMobileInput(effectiveData.phoneNumber),
           guestCode: `GUEST-${Date.now()}`,
           guestStatus: true,
-          address: formData.address || 'Not provided',
+          address: effectiveData.address || 'Not provided',
           guestCreatedBy,
         })
         guestId = newGuest.id || (newGuest as any).idpk
         guestCode = newGuest.guestCode || `GUEST-${Date.now()}`
       }
 
+      const cnicImagePayload =
+        cnicFrontImage || cnicBackImage
+          ? JSON.stringify({
+              front: cnicFrontImage || null,
+              back: cnicBackImage || null,
+            })
+          : null
+
       const purposeParts: string[] = []
-      if (formData.visitorTypeCustom.trim()) {
-        purposeParts.push(`Visitor type: ${formData.visitorTypeCustom.trim()}`)
+      if (effectiveData.visitorTypeCustom.trim()) {
+        purposeParts.push(`Visitor type: ${effectiveData.visitorTypeCustom.trim()}`)
       }
-      if (formData.destinationCustom.trim()) {
-        purposeParts.push(`Destination: ${formData.destinationCustom.trim()}`)
+      if (effectiveData.destinationCustom.trim()) {
+        purposeParts.push(`Destination: ${effectiveData.destinationCustom.trim()}`)
       }
-      if (formData.purpose.trim()) {
-        purposeParts.push(formData.purpose.trim())
+      if (effectiveData.purpose.trim()) {
+        purposeParts.push(effectiveData.purpose.trim())
       }
       const visitPurposeMerged = purposeParts.length > 0 ? purposeParts.join(' — ') : null
 
-      // Create guest visit
-      await createGuestVisit({
+      // Create guest visit. The backend's ImagePath column may have a tight
+      // length cap and reject the request when we embed CNIC photos in it.
+      // If that happens, retry without imagePath so the visit still gets
+      // recorded, and stash the photos in localStorage so "View CNIC" in
+      // the report still works on this device.
+      const visitBase = {
         guestID: guestId,
         guestCode: guestCode,
-        visitorTypeId: formData.visitorTypeId ? parseInt(formData.visitorTypeId) : null,
-        departmentCategoryIdpk: formData.destinationId ? parseInt(formData.destinationId) : null,
+        visitorTypeId: effectiveData.visitorTypeId ? parseInt(effectiveData.visitorTypeId) : null,
+        departmentCategoryIdpk: effectiveData.destinationId ? parseInt(effectiveData.destinationId) : null,
         visitPurpose: visitPurposeMerged,
-        isAppointment: formData.isAppointment,
-        isEscortRequired: formData.isEscortRequired,
-        rfidCardNumber: formData.cardNumber || null,
+        isAppointment: effectiveData.isAppointment,
+        isEscortRequired: effectiveData.isEscortRequired,
+        rfidCardNumber: effectiveData.cardNumber || null,
         timeIn: new Date().toISOString(),
-      })
+      } as const
+
+      let createdVisit: any
+      try {
+        createdVisit = await createGuestVisit({
+          ...visitBase,
+          imagePath: cnicImagePayload,
+        })
+      } catch (err) {
+        const apiErr = err as ApiError
+        const looksLikeImagePathRejection =
+          cnicImagePayload != null &&
+          (apiErr?.status === 400 || apiErr?.status === 413) &&
+          /image|path|length|size|too long|too large/i.test(apiErr?.message || '')
+        if (!looksLikeImagePathRejection) throw err
+        // Retry without the images so the entry still goes through
+        createdVisit = await createGuestVisit(visitBase)
+      }
+
+      // Always cache the photos locally keyed by visit id so the report's
+      // "View CNIC" works on this device, even if the backend dropped them.
+      const newVisitId =
+        createdVisit?.idpk ?? createdVisit?.id ?? createdVisit?.Idpk ?? null
+      if (newVisitId != null && (cnicFrontImage || cnicBackImage)) {
+        try {
+          localStorage.setItem(
+            `access360.cnicImages.${newVisitId}`,
+            JSON.stringify({
+              front: cnicFrontImage || null,
+              back: cnicBackImage || null,
+            }),
+          )
+        } catch {
+          // localStorage quota or disabled — non-fatal
+        }
+      }
 
       setSubmitStatus('success')
       setTimeout(() => {
@@ -276,6 +393,10 @@ export default function GuardCheckIn({
       setSubmitStatus('error')
       const apiError = error as ApiError
       setErrorMessage(apiError.message || 'Failed to process check-in')
+      // Bring the error into view in case the user is scrolled down
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -353,9 +474,11 @@ export default function GuardCheckIn({
                 <CameraCapture
                   onCapture={async (image) => {
                     setCapturedImage(image)
-                    setErrorMessage('') // Clear any previous errors
+                    setErrorMessage('')
                     // Auto-process captured image with OCR
                     if (image) {
+                      // Persist a compressed copy of the front image for later submission
+                      compressImageDataUrl(image).then(setCnicFrontImage)
                       try {
                         setOcrProcessing(true)
                         // Process OCR directly from base64 image
@@ -430,6 +553,21 @@ export default function GuardCheckIn({
                 />
               </div>
             </div>
+
+            <div className="mt-8 flex flex-col items-center gap-3 border-t border-neutral-200 pt-6 text-center">
+              <p className="text-xs font-medium text-neutral-500">
+                Don't want to scan? You can fill the form by hand.
+              </p>
+              <button
+                type="button"
+                onClick={handleSkipToManual}
+                disabled={ocrProcessing}
+                className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50 disabled:opacity-50"
+              >
+                <PencilSquareIcon className="h-5 w-5 shrink-0 text-neutral-700" aria-hidden />
+                Skip to manual entry
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -463,6 +601,15 @@ export default function GuardCheckIn({
           <p className="text-sm text-neutral-600">
             Confirm identity and visit details. Fields marked with an asterisk are required before check-in.
           </p>
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900"
+            >
+              <XCircleIcon className="h-5 w-5 shrink-0 text-red-700" aria-hidden />
+              <span>{errorMessage}</span>
+            </div>
+          )}
           {existingGuest ? (
             <div
               className="mt-4 rounded-xl border border-[#2563eb]/20 bg-blue-50 px-4 py-3 text-sm text-neutral-900"
@@ -508,6 +655,165 @@ export default function GuardCheckIn({
               </button>
             </div>
           )}
+
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <IdentificationIcon className="h-5 w-5 shrink-0 text-[#00A651]" aria-hidden />
+              <h3 className="text-sm font-semibold text-neutral-900">CNIC photos</h3>
+              <span className="text-xs font-medium text-neutral-500">
+                Front is captured during scan. Back side is optional but recommended.
+              </span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-600">Front side</p>
+                {cnicFrontImage ? (
+                  <div className="space-y-2">
+                    <div className="relative aspect-video overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-black/5">
+                      <img src={cnicFrontImage} alt="CNIC front" className="h-full w-full object-contain" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="cursor-pointer rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50">
+                        Replace
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = async () => {
+                              const raw = String(reader.result || '')
+                              setCnicFrontImage(await compressImageDataUrl(raw))
+                            }
+                            reader.readAsDataURL(file)
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setCnicFrontImage('')}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-white text-xs text-neutral-500">
+                      No front image yet
+                    </div>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50">
+                      <CameraIcon className="h-4 w-4 text-[#2563eb]" aria-hidden />
+                      Upload front
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          const reader = new FileReader()
+                          reader.onload = async () => {
+                            const raw = String(reader.result || '')
+                            setCnicFrontImage(await compressImageDataUrl(raw))
+                          }
+                          reader.readAsDataURL(file)
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-600">Back side</p>
+                {cnicBackImage ? (
+                  <div className="space-y-2">
+                    <div className="relative aspect-video overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-black/5">
+                      <img src={cnicBackImage} alt="CNIC back" className="h-full w-full object-contain" />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCnicBackImage('')
+                          setBackCaptureMode('camera')
+                        }}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+                      >
+                        Retake
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCnicBackImage('')}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : backCaptureMode === 'camera' ? (
+                  <div className="space-y-2">
+                    <CameraCapture
+                      onCapture={async (img) => {
+                        if (img) {
+                          setCnicBackImage(await compressImageDataUrl(img))
+                          setBackCaptureMode('idle')
+                        }
+                      }}
+                      capturedImage={cnicBackImage}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBackCaptureMode('idle')}
+                      className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-white text-xs text-neutral-500">
+                      No back image yet
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBackCaptureMode('camera')}
+                        className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+                      >
+                        <CameraIcon className="h-4 w-4 text-[#2563eb]" aria-hidden />
+                        Capture with camera
+                      </button>
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50">
+                        <DocumentTextIcon className="h-4 w-4 text-[#00A651]" aria-hidden />
+                        Upload image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = async () => {
+                              const raw = String(reader.result || '')
+                              setCnicBackImage(await compressImageDataUrl(raw))
+                            }
+                            reader.readAsDataURL(file)
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
             <div>

@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { 
-  ChartBarIcon, 
-  DocumentArrowDownIcon, 
+import {
+  ChartBarIcon,
+  DocumentArrowDownIcon,
   CalendarIcon,
   ClockIcon,
   UserGroupIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  IdentificationIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { getAllGuestVisits, getActiveGuestVisits, type GuestVisit } from '../services/guestVisitApi'
 import { PageLayout } from './layout/PageLayout'
@@ -54,6 +56,28 @@ interface ReportData {
   duration?: number
   /** 0–23 from visit timeIn in PKT (peak-hour charts) */
   entryHour24?: number
+  cnicFrontImage?: string
+  cnicBackImage?: string
+}
+
+/** Visit.imagePath holds a JSON string `{front, back}` written by the check-in flow. */
+function parseCnicImagePath(raw: string | null | undefined): { front?: string; back?: string } {
+  if (!raw) return {}
+  const trimmed = String(raw).trim()
+  if (!trimmed) return {}
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed) as { front?: unknown; back?: unknown }
+      return {
+        front: typeof parsed.front === 'string' ? parsed.front : undefined,
+        back: typeof parsed.back === 'string' ? parsed.back : undefined,
+      }
+    } catch {
+      return {}
+    }
+  }
+  // Legacy / non-JSON values are treated as a single front image
+  return { front: trimmed }
 }
 
 function guestPhoneFromVisit(visit: GuestVisit): string {
@@ -89,6 +113,24 @@ function convertVisitToReportData(visit: GuestVisit): ReportData {
   }
 
   const status = reportVisitRowStatus(visit)
+  let cnicImages = parseCnicImagePath(visit.imagePath)
+  // Fallback: this device may have a local copy of the CNIC photos from when
+  // the visit was created (used when the backend's ImagePath column was too
+  // small to hold the embedded base64).
+  if (!cnicImages.front && !cnicImages.back) {
+    try {
+      const local = localStorage.getItem(`access360.cnicImages.${visit.idpk}`)
+      if (local) {
+        const parsed = JSON.parse(local) as { front?: unknown; back?: unknown }
+        cnicImages = {
+          front: typeof parsed.front === 'string' ? parsed.front : undefined,
+          back: typeof parsed.back === 'string' ? parsed.back : undefined,
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   return {
     id: visit.idpk.toString(),
@@ -104,6 +146,8 @@ function convertVisitToReportData(visit: GuestVisit): ReportData {
     status,
     duration,
     entryHour24: visit.timeIn ? getPktHour24(visit.timeIn) : undefined,
+    cnicFrontImage: cnicImages.front,
+    cnicBackImage: cnicImages.back,
   }
 }
 
@@ -113,6 +157,7 @@ export default function ReportsDashboard(): React.JSX.Element {
     start: getPktTodayYmd(),
     end: getPktTodayYmd(),
   })
+  const [cnicViewerRecord, setCnicViewerRecord] = useState<ReportData | null>(null)
   const [allVisits, setAllVisits] = useState<GuestVisit[]>([])
   /** Same payload as live rows; merged into `allVisits` for stats when the list endpoint omits open visits. */
   const [activeGuestVisits, setActiveGuestVisits] = useState<GuestVisit[]>([])
@@ -348,6 +393,27 @@ export default function ReportsDashboard(): React.JSX.Element {
     }
   }
 
+  const renderCnicCell = (record: ReportData) => {
+    const hasImages = Boolean(record.cnicFrontImage || record.cnicBackImage)
+    return (
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 min-w-0">
+        <span className="whitespace-nowrap text-neutral-900">{record.cnic}</span>
+        {hasImages && (
+          <button
+            type="button"
+            onClick={() => setCnicViewerRecord(record)}
+            title="View CNIC photos"
+            aria-label={`View CNIC photos for ${record.visitorName}`}
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-[#2563eb]/30 bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-[#2563eb] hover:bg-blue-100"
+          >
+            <IdentificationIcon className="h-3.5 w-3.5" aria-hidden />
+            View
+          </button>
+        )}
+      </div>
+    )
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active': return <ClockIcon className="w-4 h-4" />
@@ -487,7 +553,7 @@ export default function ReportsDashboard(): React.JSX.Element {
                 liveRecords.map((record) => (
                   <div key={record.id} className="px-4 py-3 grid grid-cols-9 gap-2 text-sm hover:bg-white items-start">
                     <div className="font-medium text-neutral-900 min-w-0 break-words">{record.visitorName}</div>
-                    <div className="text-neutral-900 min-w-0 break-words">{record.cnic}</div>
+                    {renderCnicCell(record)}
                     <div className="text-neutral-900 min-w-0 break-all">{record.phone}</div>
                     <div className="text-neutral-900 min-w-0 break-words">{record.visitorType}</div>
                     <div className="text-neutral-900 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
@@ -533,7 +599,7 @@ export default function ReportsDashboard(): React.JSX.Element {
                 dailyRecords.map((record) => (
                   <div key={record.id} className="px-4 py-3 grid grid-cols-10 gap-2 text-sm hover:bg-white items-start">
                     <div className="font-medium text-neutral-900 min-w-0 break-words">{record.visitorName}</div>
-                    <div className="text-neutral-900 min-w-0 break-words">{record.cnic}</div>
+                    {renderCnicCell(record)}
                     <div className="text-neutral-900 min-w-0 break-all">{record.phone}</div>
                     <div className="text-neutral-900 min-w-0 break-words">{record.visitorType}</div>
                     <div className="text-neutral-900 min-w-0 break-words leading-snug" title={record.site}>{record.site}</div>
@@ -673,6 +739,87 @@ export default function ReportsDashboard(): React.JSX.Element {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {cnicViewerRecord && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="CNIC photos"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setCnicViewerRecord(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900">CNIC photos</h3>
+                <p className="mt-0.5 text-sm text-neutral-600">
+                  {cnicViewerRecord.visitorName} — {cnicViewerRecord.cnic}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCnicViewerRecord(null)}
+                aria-label="Close CNIC photos"
+                className="rounded-full p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+              >
+                <XMarkIcon className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-600">Front</p>
+                {cnicViewerRecord.cnicFrontImage ? (
+                  <a
+                    href={cnicViewerRecord.cnicFrontImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-black/5"
+                  >
+                    <img
+                      src={cnicViewerRecord.cnicFrontImage}
+                      alt="CNIC front"
+                      className="h-auto w-full object-contain"
+                    />
+                  </a>
+                ) : (
+                  <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 text-sm text-neutral-500">
+                    No front image
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-600">Back</p>
+                {cnicViewerRecord.cnicBackImage ? (
+                  <a
+                    href={cnicViewerRecord.cnicBackImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block overflow-hidden rounded-lg bg-neutral-100 ring-1 ring-black/5"
+                  >
+                    <img
+                      src={cnicViewerRecord.cnicBackImage}
+                      alt="CNIC back"
+                      className="h-auto w-full object-contain"
+                    />
+                  </a>
+                ) : (
+                  <div className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-50 text-sm text-neutral-500">
+                    No back image
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-neutral-500">
+              Tip: click an image to open the full-size version in a new tab.
+            </p>
           </div>
         </div>
       )}

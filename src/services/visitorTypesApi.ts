@@ -89,8 +89,10 @@ export const getVisitorTypeById = async (id: number): Promise<VisitorType> => {
 
 export const createVisitorType = async (visitorType: Partial<VisitorType>): Promise<any> => {
   try {
-    const dto: CreateVisitorTypeDto = {
-      Idpk: 0, // Auto-increment - always set to 0
+    // Do NOT send Idpk: the backend rejects Idpk=0 as "already exists" and
+    // there is no way for the client to know a safe next id. Letting the
+    // backend's identity column assign one is the only correct path.
+    const body = {
       VTypeName: visitorType.vTypeName || '',
       VTypeStatus: visitorType.vTypeStatus ?? true,
       VTypeCreatedBy: visitorType.vTypeCreatedBy || 'System',
@@ -102,7 +104,7 @@ export const createVisitorType = async (visitorType: Partial<VisitorType>): Prom
         'accept': '*/*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(dto),
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {

@@ -4,6 +4,7 @@ import { getAllScheduledGuests, approveScheduledGuest, rejectScheduledGuest, typ
 import { formatPktDateTime } from '../utils/pktTime'
 import AdminScheduledGuestsPending from '../pages/AdminScheduledGuestsPending'
 import AdminScheduledGuestsApproved from '../pages/AdminScheduledGuestsApproved'
+import AdminScheduledGuestsRejected from '../pages/AdminScheduledGuestsRejected'
 
 export default function ScheduledGuestsApproval(): React.JSX.Element {
   const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
@@ -164,29 +165,35 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
           <AdminScheduledGuestsApproved />
         </section>
 
-        {/* Rejected Requests */}
+        {/* Rejected Faculty Visit Requests (new endpoint) */}
+        <section>
+          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected Faculty Visit Requests</h3>
+          <AdminScheduledGuestsRejected />
+        </section>
+
+        {/* Legacy rejected scheduled guests (older API) */}
         {rejectedGuests.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected ({rejectedGuests.length})</h3>
+          <section>
+            <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected scheduled guests ({rejectedGuests.length})</h3>
             <div className="space-y-2">
               {rejectedGuests.slice(0, 5).map((guest) => (
-                <div key={guest.idpk} className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 border border-red-500/30">
+                <div key={guest.idpk} className="rounded-xl border border-red-500/30 bg-neutral-50 p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-semibold text-neutral-900">{guest.guestFullName}</span>
                       {guest.rejectionReason && (
-                        <span className="ml-3 text-sm text-red-300">Reason: {guest.rejectionReason}</span>
+                        <span className="ml-3 text-sm text-red-700">Reason: {guest.rejectionReason}</span>
                       )}
                       <div className="text-xs text-neutral-600 mt-1">
                         Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk}) • Purpose: {guest.purpose}
                       </div>
                     </div>
-                    <span className="px-2 py-1 bg-red-500/20 text-red-300 rounded text-xs font-medium">Rejected</span>
+                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">Rejected</span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
     </div>

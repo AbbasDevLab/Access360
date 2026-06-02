@@ -51,3 +51,10 @@ export async function getApprovedGuestFacultyVisits(): Promise<GuestFacultyVisit
   return res.data
 }
 
+export async function getRejectedGuestFacultyVisits(): Promise<GuestFacultyVisit[]> {
+  const res = await axios.get<GuestFacultyVisit[]>(
+    `${API_BASE}/api/GuestFacultyVisit/GetRejectedGuestFacultyVisits`,
+  )
+  return res.data
+}
+

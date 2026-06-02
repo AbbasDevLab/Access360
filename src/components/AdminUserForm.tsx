@@ -9,11 +9,15 @@ import { useTranslation } from 'react-i18next'
 interface AdminUserFormProps {
   onSuccess?: (user: AdminUser) => void
   onError?: (error: string) => void
+  /** Role baked into the POST payload. Defaults to 'Admin' (Users tab);
+   *  pass 'Guard' from the Guards tab. The same backend endpoint is used. */
+  roleType?: string
 }
 
 export default function AdminUserForm({
   onSuccess,
   onError,
+  roleType = 'Admin',
 }: AdminUserFormProps): React.JSX.Element {
   const { t } = useTranslation()
   const [formData, setFormData] = useState<Partial<AdminUser>>({
@@ -29,6 +33,7 @@ export default function AdminUserForm({
     userCompanyIdpk: null,
     userIsDisabled: false,
     userCreatedBy: 'System',
+    roleType,
   })
   const [companies, setCompanies] = useState<Company[]>([])
   const [locations, setLocations] = useState<Location[]>([])
@@ -80,6 +85,7 @@ export default function AdminUserForm({
           userCompanyIdpk: null,
           userIsDisabled: false,
           userCreatedBy: 'System',
+          roleType,
         })
         setSubmitStatus('idle')
       }, 2000)
@@ -164,14 +170,13 @@ export default function AdminUserForm({
 
         <div className="grid gap-2">
           <label htmlFor="userEmail" className="text-sm font-medium text-neutral-700">
-            <span className="font-semibold">{t('email')}</span> / <span className="font-urdu text-base" dir="rtl">{t('email', { lng: 'ur' })}</span> <span className="text-red-500">{t('required')}</span>
+            <span className="font-semibold">{t('email')}</span> / <span className="font-urdu text-base" dir="rtl">{t('email', { lng: 'ur' })}</span>
           </label>
           <input
             id="userEmail"
             type="email"
-            value={formData.userEmail}
+            value={formData.userEmail || ''}
             onChange={(e) => handleInputChange('userEmail', e.target.value)}
-            required
             disabled={isSubmitting}
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
           />
@@ -207,6 +212,25 @@ export default function AdminUserForm({
             className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
           />
         </div>
+      </div>
+
+      <div className="grid gap-2">
+        <label htmlFor="userDateOfBirth" className="text-sm font-medium text-neutral-700">
+          <span className="font-semibold">Date of birth</span>
+        </label>
+        <input
+          id="userDateOfBirth"
+          type="date"
+          value={formData.userDateOfBirth ? String(formData.userDateOfBirth).substring(0, 10) : ''}
+          onChange={(e) =>
+            handleInputChange(
+              'userDateOfBirth',
+              e.target.value ? new Date(e.target.value).toISOString() : null,
+            )
+          }
+          disabled={isSubmitting}
+          className="rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -301,7 +325,7 @@ export default function AdminUserForm({
 
       <button
         type="submit"
-        disabled={isSubmitting || !formData.id?.trim() || !formData.userFullName?.trim() || !formData.username?.trim() || !formData.userEmail?.trim() || !formData.userPassword?.trim()}
+        disabled={isSubmitting || !formData.id?.trim() || !formData.userFullName?.trim() || !formData.username?.trim() || !formData.userPassword?.trim()}
         className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white font-medium px-6 py-3 transition-colors flex items-center justify-center gap-2"
       >
         {isSubmitting ? (

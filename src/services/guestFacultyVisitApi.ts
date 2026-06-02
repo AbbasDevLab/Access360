@@ -1,4 +1,6 @@
-const API_BASE = 'https://server.access360.site:88'
+// Dev: Vite proxy forwards `/api/*` to the real backend (vite.config.ts).
+// Prod: hit the absolute backend directly.
+const API_BASE = import.meta.env.DEV ? '' : 'https://server.access360.site:88'
 
 export interface GuestFacultyVisit {
   id: number

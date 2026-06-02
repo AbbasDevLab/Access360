@@ -3,13 +3,10 @@ import { useLocation } from 'react-router-dom'
 import { PlusIcon, ListBulletIcon, UserIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
-import GuardForm from '../components/GuardForm'
-import GuardList from '../components/GuardList'
 import ScheduledGuestsApproval from '../components/ScheduledGuestsApproval'
 import { ContentCard, PageLayout } from '../components/layout/PageLayout'
 import { ViewToggle } from '../components/layout/ViewToggle'
 import type { AdminUser } from '../services/adminApi'
-import type { Guard } from '../services/guardsApi'
 
 const TAB_ACTIVE = 'bg-[#00A651] text-white shadow-md shadow-[#00A651]/25'
 const TAB_IDLE =
@@ -34,12 +31,6 @@ export default function AdminRoute() {
 
   const handleUserCreated = (user: AdminUser) => {
     console.log('Admin user created:', user)
-    if (activeView === 'list') setRefreshKey((prev) => prev + 1)
-    else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
-  }
-
-  const handleGuardCreated = (guard: Guard) => {
-    console.log('Guard created:', guard)
     if (activeView === 'list') setRefreshKey((prev) => prev + 1)
     else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
   }
@@ -93,17 +84,25 @@ export default function AdminRoute() {
         {activeTab === 'users' && (
           <>
             {activeView === 'create' && (
-              <AdminUserForm onSuccess={handleUserCreated} onError={(e) => console.error(e)} />
+              <AdminUserForm roleType="Admin" onSuccess={handleUserCreated} onError={(e) => console.error(e)} />
             )}
-            {activeView === 'list' && <AdminUserList key={refreshKey} onRefresh={handleRefreshNeeded} />}
+            {activeView === 'list' && (
+              <AdminUserList key={refreshKey} roleType="Admin" onRefresh={handleRefreshNeeded} />
+            )}
           </>
         )}
         {activeTab === 'guards' && (
           <>
             {activeView === 'create' && (
-              <GuardForm onSuccess={handleGuardCreated} onError={(e) => console.error(e)} />
+              <AdminUserForm
+                roleType="Guard"
+                onSuccess={handleUserCreated}
+                onError={(e) => console.error(e)}
+              />
             )}
-            {activeView === 'list' && <GuardList key={refreshKey} onRefresh={handleRefreshNeeded} />}
+            {activeView === 'list' && (
+              <AdminUserList key={refreshKey} roleType="Guard" onRefresh={handleRefreshNeeded} />
+            )}
           </>
         )}
         {activeTab === 'scheduled' && <ScheduledGuestsApproval />}

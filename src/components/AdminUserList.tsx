@@ -10,11 +10,14 @@ import {
 interface AdminUserListProps {
   onEdit?: (user: AdminUser) => void
   onRefresh?: () => void
+  /** Filter rows to only this role. When omitted, all users are shown. */
+  roleType?: string
 }
 
 export default function AdminUserList({
   onEdit,
   onRefresh,
+  roleType,
 }: AdminUserListProps): React.JSX.Element {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -22,6 +25,17 @@ export default function AdminUserList({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
+
+  // Both tabs (Users / Guards) read from the same /Admin/GetAdminUsers endpoint
+  // and filter client-side by roleType; case-insensitive to tolerate "Admin",
+  // "admin", " Admin " etc. from the API.
+  const filteredUsers = roleType
+    ? users.filter((u) => (u.roleType ?? '').trim().toLowerCase() === roleType.trim().toLowerCase())
+    : users
+
+  const entityLabel =
+    roleType?.toLowerCase() === 'guard' ? 'guard' : 'admin user'
+  const entityLabelPlural = `${entityLabel}s`
 
   const fetchUsers = async () => {
     setIsLoading(true)
@@ -31,7 +45,7 @@ export default function AdminUserList({
       setUsers(data)
     } catch (err) {
       const apiError = err as ApiError
-      setError(apiError.message || 'Failed to fetch admin users')
+      setError(apiError.message || `Failed to fetch ${entityLabelPlural}`)
     } finally {
       setIsLoading(false)
     }
@@ -42,7 +56,7 @@ export default function AdminUserList({
   }, [])
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this admin user?')) {
+    if (!window.confirm(`Are you sure you want to delete this ${entityLabel}?`)) {
       return
     }
 
@@ -53,13 +67,13 @@ export default function AdminUserList({
     try {
       const response = await deleteAdminUser(id)
       setDeleteStatus('success')
-      setDeleteMessage(response.message || 'Admin user deleted successfully!')
+      setDeleteMessage(response.message || `${entityLabel.charAt(0).toUpperCase()}${entityLabel.slice(1)} deleted successfully!`)
       fetchUsers()
       if (onRefresh) onRefresh()
     } catch (err) {
       setDeleteStatus('error')
       const apiError = err as ApiError
-      setDeleteMessage(apiError.message || 'Failed to delete admin user')
+      setDeleteMessage(apiError.message || `Failed to delete ${entityLabel}`)
     } finally {
       setDeletingId(null)
       setTimeout(() => {
@@ -76,7 +90,7 @@ export default function AdminUserList({
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <p>Loading admin users...</p>
+        <p>Loading {entityLabelPlural}...</p>
       </div>
     )
   }
@@ -111,11 +125,11 @@ export default function AdminUserList({
         </div>
       )}
 
-      {users.length === 0 ? (
+      {filteredUsers.length === 0 ? (
         <div className="text-center py-12 text-neutral-500">
           <InformationCircleIcon className="w-12 h-12 mx-auto mb-4 text-neutral-400" />
-          <p>No admin users found.</p>
-          <p className="text-sm mt-2">Create a new admin user to get started.</p>
+          <p>No {entityLabelPlural} found.</p>
+          <p className="text-sm mt-2">Create a new {entityLabel} to get started.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -143,7 +157,7 @@ export default function AdminUserList({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                     {user.id}

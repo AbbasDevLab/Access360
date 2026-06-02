@@ -1,6 +1,11 @@
-// Global API configuration
+// Global API configuration.
+// In dev the Vite proxy (vite.config.ts) forwards `/api/*` to the real backend,
+// so the browser sees same-origin requests and CORS is not involved.
+// In a production build we go straight to the absolute backend URL.
 export const API_CONFIG = {
-  BASE_URL: 'https://server.access360.site:88/api/',
+  BASE_URL: import.meta.env.DEV
+    ? '/api/'
+    : 'https://server.access360.site:88/api/',
 } as const
 
 // API helper function to create full URLs
@@ -74,6 +79,7 @@ export const VISITOR_TYPE_ENDPOINTS = {
 
 // Admin API endpoints
 export const ADMIN_ENDPOINTS = {
+  LOGIN: '/Admin/Login/Login',
   GET_ADMIN_USERS: '/Admin/GetAdminUsers',
   GET_ADMIN_USER_BY_ID: '/Admin/GetAdminUserById/User/{id}',
   CREATE_ADMIN_USER: '/Admin/CreateAdminUser/User',

@@ -6,11 +6,20 @@ import AdminScheduledGuestsPending from '../pages/AdminScheduledGuestsPending'
 import AdminScheduledGuestsApproved from '../pages/AdminScheduledGuestsApproved'
 import AdminScheduledGuestsRejected from '../pages/AdminScheduledGuestsRejected'
 
+type StatusTab = 'pending' | 'approved' | 'rejected'
+
+const STATUS_TABS: { id: StatusTab; label: string }[] = [
+  { id: 'pending', label: 'Pending' },
+  { id: 'approved', label: 'Approved' },
+  { id: 'rejected', label: 'Rejected' },
+]
+
 export default function ScheduledGuestsApproval(): React.JSX.Element {
   const [scheduledGuests, setScheduledGuests] = useState<ScheduledGuest[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [rejectReason, setRejectReason] = useState<{ [key: number]: string }>({})
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
+  const [statusTab, setStatusTab] = useState<StatusTab>('pending')
 
   useEffect(() => {
     loadScheduledGuests()
@@ -65,21 +74,65 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[20px] bg-white shadow-md shadow-black/8 ring-1 ring-black/5 p-6 space-y-8">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Scheduled Guests Approval</h2>
+      <div className="rounded-[20px] bg-white shadow-md shadow-black/8 ring-1 ring-black/5 p-6 space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-2xl font-bold text-neutral-900">Scheduled Guests Approval</h2>
+          <div
+            role="tablist"
+            aria-label="Request status"
+            className="inline-flex items-center gap-1 rounded-xl border border-neutral-200 bg-neutral-50 p-1"
+          >
+            {STATUS_TABS.map((t) => {
+              const isActive = statusTab === t.id
+              const count =
+                t.id === 'pending'
+                  ? pendingGuests.length
+                  : t.id === 'approved'
+                    ? approvedGuests.length
+                    : rejectedGuests.length
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setStatusTab(t.id)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-[#00A651] text-white shadow-sm'
+                      : 'text-neutral-700 hover:bg-white hover:text-neutral-900'
+                  }`}
+                >
+                  {t.label}
+                  {count > 0 && (
+                    <span
+                      className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-        {/* Pending Faculty Visit Requests (from new API) */}
-        <section>
-          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Pending Faculty Visit Requests</h3>
-          <AdminScheduledGuestsPending />
-        </section>
+        {statusTab === 'pending' && (
+          <>
+            {/* Pending Faculty Visit Requests (from new API) */}
+            <section>
+              <h3 className="text-lg font-semibold text-neutral-800 mb-3">Faculty visit requests</h3>
+              <AdminScheduledGuestsPending />
+            </section>
 
-        {/* Existing Pending Scheduled Guests */}
-        <section>
-          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Pending Scheduled Guests ({pendingGuests.length})</h3>
-          {pendingGuests.length === 0 ? (
-            <p className="text-neutral-500">No pending scheduled guest requests</p>
-          ) : (
+            {/* Existing Pending Scheduled Guests */}
+            <section>
+              <h3 className="text-lg font-semibold text-neutral-800 mb-3">Scheduled guests ({pendingGuests.length})</h3>
+              {pendingGuests.length === 0 ? (
+                <p className="text-neutral-500">No pending scheduled guest requests</p>
+              ) : (
             <div className="space-y-3">
               {pendingGuests.map((guest) => (
                 <div key={guest.idpk} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 border border-yellow-500/30">
@@ -156,44 +209,53 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
                 </div>
               ))}
             </div>
-          )}
-        </section>
+              )}
+            </section>
+          </>
+        )}
 
-        {/* Approved Faculty Visit Requests (new endpoint) */}
-        <section>
-          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Approved Faculty Visit Requests</h3>
-          <AdminScheduledGuestsApproved />
-        </section>
-
-        {/* Rejected Faculty Visit Requests (new endpoint) */}
-        <section>
-          <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected Faculty Visit Requests</h3>
-          <AdminScheduledGuestsRejected />
-        </section>
-
-        {/* Legacy rejected scheduled guests (older API) */}
-        {rejectedGuests.length > 0 && (
+        {statusTab === 'approved' && (
           <section>
-            <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected scheduled guests ({rejectedGuests.length})</h3>
-            <div className="space-y-2">
-              {rejectedGuests.slice(0, 5).map((guest) => (
-                <div key={guest.idpk} className="rounded-xl border border-red-500/30 bg-neutral-50 p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-neutral-900">{guest.guestFullName}</span>
-                      {guest.rejectionReason && (
-                        <span className="ml-3 text-sm text-red-700">Reason: {guest.rejectionReason}</span>
-                      )}
-                      <div className="text-xs text-neutral-600 mt-1">
-                        Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk}) • Purpose: {guest.purpose}
+            <h3 className="text-lg font-semibold text-neutral-800 mb-3">Approved faculty visit requests</h3>
+            <AdminScheduledGuestsApproved />
+          </section>
+        )}
+
+        {statusTab === 'rejected' && (
+          <div className="space-y-6">
+            <section>
+              <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected faculty visit requests</h3>
+              <AdminScheduledGuestsRejected />
+            </section>
+
+            <section>
+              <h3 className="text-lg font-semibold text-neutral-800 mb-3">
+                Rejected scheduled guests ({rejectedGuests.length})
+              </h3>
+              {rejectedGuests.length === 0 ? (
+                <p className="text-neutral-500">No rejected scheduled guests</p>
+              ) : (
+                <div className="space-y-2">
+                  {rejectedGuests.map((guest) => (
+                    <div key={guest.idpk} className="rounded-xl border border-red-500/30 bg-neutral-50 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-neutral-900">{guest.guestFullName}</span>
+                          {guest.rejectionReason && (
+                            <span className="ml-3 text-sm text-red-700">Reason: {guest.rejectionReason}</span>
+                          )}
+                          <div className="text-xs text-neutral-600 mt-1">
+                            Faculty: {guest.facultyName || 'Unknown'} (ID: {guest.facultyIdpk}) • Purpose: {guest.purpose}
+                          </div>
+                        </div>
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">Rejected</span>
                       </div>
                     </div>
-                    <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">Rejected</span>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              )}
+            </section>
+          </div>
         )}
       </div>
     </div>

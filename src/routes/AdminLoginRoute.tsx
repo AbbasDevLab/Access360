@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { ShieldCheckIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getAllAdminUsers } from '../services/adminApi'
+import { loginAdminUser } from '../services/adminApi'
+import type { ApiError } from '../services/adminApi'
 
 export default function AdminLoginRoute(): React.JSX.Element {
   const [username, setUsername] = useState('')
@@ -34,53 +35,39 @@ export default function AdminLoginRoute(): React.JSX.Element {
     setIsLoading(true)
 
     try {
-      // Get all admin users and find matching username
-      const adminUsers = await getAllAdminUsers()
-      const user = adminUsers.find(
-        (u) => u.username.toLowerCase() === username.toLowerCase() && u.userStatus && !u.userIsDisabled
+      const result = await loginAdminUser({
+        username: username.trim(),
+        password: password.trim(),
+      })
+
+      if (!result.success || !result.user) {
+        setError(result.message || 'Invalid username or password')
+        return
+      }
+
+      // Persist whatever the backend returned, normalised for the rest of the app
+      localStorage.setItem(
+        'adminUser',
+        JSON.stringify({
+          id: result.user.id,
+          username: result.user.username,
+          userFullName: result.user.fullName,
+          userEmail: result.user.email,
+          role: result.user.role,
+          companyId: result.user.companyId,
+          locationId: result.user.locationId,
+          loggedIn: true,
+          loginTime: new Date().toISOString(),
+        }),
       )
 
-      if (user) {
-        // Verify password (if userPassword is available and not empty)
-        // Note: In production, this should be done on the backend with proper password hashing
-        // For now, we check if password is provided and matches stored password (if available)
-        if (!password.trim()) {
-          setError('Please enter password')
-          return
-        }
-
-        // TODO: Implement proper backend authentication API that handles password hashing
-        // For now, if userPassword is available, compare it (assuming plaintext for development)
-        // In production, passwords should be hashed and compared on the backend
-        if (user.userPassword && user.userPassword.trim() !== '') {
-          // Compare passwords (assuming plaintext for now - should be hashed in production)
-          if (user.userPassword !== password.trim()) {
-            setError('Invalid username or password')
-            return
-          }
-        }
-        // If no password stored, accept any password for development (NOT for production!)
-        // TODO: Remove this fallback once backend authentication is implemented
-
-        // Store admin session
-        localStorage.setItem('adminUser', JSON.stringify({
-          id: user.id,
-          username: user.username,
-          userFullName: user.userFullName,
-          userEmail: user.userEmail,
-          loggedIn: true,
-          loginTime: new Date().toISOString()
-        }))
-        // Redirect to admin dashboard or the page they came from (never back to login)
-        const from = (location.state as any)?.from?.pathname
-        const target = from && from !== '/login' ? from : '/dashboard'
-        navigate(target, { replace: true })
-      } else {
-        setError('Invalid username or password')
-      }
+      const from = (location.state as any)?.from?.pathname
+      const target = from && from !== '/login' ? from : '/dashboard'
+      navigate(target, { replace: true })
     } catch (err) {
       console.error('Login error:', err)
-      setError('Login failed. Please try again.')
+      const apiErr = err as ApiError
+      setError(apiErr?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

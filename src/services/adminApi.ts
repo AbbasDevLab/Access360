@@ -2,6 +2,10 @@ import { createApiUrl, ADMIN_ENDPOINTS } from '../data/global'
 
 // ==================== Admin User Types ====================
 
+/** Role types accepted by the backend's CreateAdminUser endpoint. */
+export const ROLE_TYPES = ['Admin', 'Staff Admin', 'Guard'] as const
+export type RoleType = typeof ROLE_TYPES[number]
+
 export interface AdminUser {
   id: string
   userFullName: string
@@ -18,23 +22,46 @@ export interface AdminUser {
   userCreatedAt?: string | null
   userUpdatedBy?: string | null
   userUpdatedAt?: string | null
+  roleType?: string | null
   company?: any
   location?: any
 }
 
 export interface CreateAdminUserDto {
-  Id: string
-  UserFullName: string
-  UserCode?: string | null
-  Username: string
-  UserEmail: string
-  UserPassword: string
-  UserDateOfBirth?: string | null
-  UserStatus: boolean
-  UserLocationIdpk?: number | null
-  UserCompanyIdpk?: number | null
-  UserIsDisabled: boolean
-  UserCreatedBy?: string | null
+  id: string
+  userFullName: string
+  userCode?: string | null
+  username: string
+  userEmail?: string | null
+  userPassword: string
+  userDateOfBirth?: string | null
+  userStatus: boolean
+  userLocationIdpk?: number | null
+  userCompanyIdpk?: number | null
+  userIsDisabled: boolean
+  userCreatedBy?: string | null
+  roleType: string
+}
+
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface AuthenticatedUser {
+  id: string
+  username: string
+  fullName: string
+  email: string
+  role: string
+  companyId: number | null
+  locationId: number | null
+}
+
+export interface LoginResponse {
+  success: boolean
+  message: string
+  user?: AuthenticatedUser
 }
 
 export interface UpdateAdminUserDto {
@@ -106,6 +133,37 @@ export interface ApiError {
 
 // ==================== Admin User API ====================
 
+export const loginAdminUser = async (
+  credentials: LoginRequest,
+): Promise<LoginResponse> => {
+  try {
+    const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.LOGIN), {
+      method: 'POST',
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    })
+
+    // The backend returns 200 with {success:false,...} for bad credentials,
+    // so we parse the body whether the HTTP status is ok or not.
+    const json = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw {
+        message: json?.message || `Login failed (HTTP ${response.status})`,
+        status: response.status,
+      } as ApiError
+    }
+    return json as LoginResponse
+  } catch (error) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      throw error as ApiError
+    }
+    throw { message: 'Network error: Failed to log in', status: 0 } as ApiError
+  }
+}
+
 export const getAllAdminUsers = async (): Promise<AdminUser[]> => {
   try {
     const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.GET_ADMIN_USERS), {
@@ -159,19 +217,28 @@ export const getAdminUserById = async (id: string): Promise<AdminUser> => {
 
 export const createAdminUser = async (user: Partial<AdminUser>): Promise<any> => {
   try {
+    // Backend requires a non-empty UserEmail even though the UI marks it
+    // optional, so synthesise a placeholder from username when blank. The user
+    // can update it later via UpdateAdminUser.
+    const username = user.username || ''
+    const trimmedEmail = user.userEmail?.trim() || ''
+    const effectiveEmail =
+      trimmedEmail || (username ? `${username}@noemail.access360.local` : '')
+
     const dto: CreateAdminUserDto = {
-      Id: user.id || '',
-      UserFullName: user.userFullName || '',
-      UserCode: user.userCode || null,
-      Username: user.username || '',
-      UserEmail: user.userEmail || '',
-      UserPassword: user.userPassword || '',
-      UserDateOfBirth: user.userDateOfBirth || null,
-      UserStatus: user.userStatus ?? true,
-      UserLocationIdpk: user.userLocationIdpk || null,
-      UserCompanyIdpk: user.userCompanyIdpk || null,
-      UserIsDisabled: user.userIsDisabled ?? false,
-      UserCreatedBy: user.userCreatedBy || 'System',
+      id: user.id || '',
+      userFullName: user.userFullName || '',
+      userCode: user.userCode || null,
+      username,
+      userEmail: effectiveEmail,
+      userPassword: user.userPassword || '',
+      userDateOfBirth: user.userDateOfBirth || null,
+      userStatus: user.userStatus ?? true,
+      userLocationIdpk: user.userLocationIdpk || 0,
+      userCompanyIdpk: user.userCompanyIdpk || 0,
+      userIsDisabled: user.userIsDisabled ?? false,
+      userCreatedBy: user.userCreatedBy || 'System',
+      roleType: user.roleType || 'Admin',
     }
 
     const response = await fetch(createApiUrl(ADMIN_ENDPOINTS.CREATE_ADMIN_USER), {

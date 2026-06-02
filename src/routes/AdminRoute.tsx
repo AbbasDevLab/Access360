@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { PlusIcon, ListBulletIcon, UserIcon, BuildingOfficeIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, ListBulletIcon, UserIcon, LockClosedIcon, CalendarIcon } from '@heroicons/react/24/outline'
 import AdminUserForm from '../components/AdminUserForm'
 import AdminUserList from '../components/AdminUserList'
-import CompanyForm from '../components/CompanyForm'
-import CompanyList from '../components/CompanyList'
 import GuardForm from '../components/GuardForm'
 import GuardList from '../components/GuardList'
 import ScheduledGuestsApproval from '../components/ScheduledGuestsApproval'
 import { ContentCard, PageLayout } from '../components/layout/PageLayout'
 import { ViewToggle } from '../components/layout/ViewToggle'
-import type { AdminUser, Company } from '../services/adminApi'
+import type { AdminUser } from '../services/adminApi'
 import type { Guard } from '../services/guardsApi'
 
 const TAB_ACTIVE = 'bg-[#00A651] text-white shadow-md shadow-[#00A651]/25'
@@ -19,14 +17,14 @@ const TAB_IDLE =
 
 export default function AdminRoute() {
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState<'users' | 'companies' | 'guards' | 'scheduled'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'guards' | 'scheduled'>('users')
   const [activeView, setActiveView] = useState<'list' | 'create'>('create')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    if (tab === 'scheduled' || tab === 'users' || tab === 'companies' || tab === 'guards') {
+    if (tab === 'scheduled' || tab === 'users' || tab === 'guards') {
       setActiveTab(tab)
       if (tab === 'scheduled') return
       const view = params.get('view')
@@ -40,12 +38,6 @@ export default function AdminRoute() {
     else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
   }
 
-  const handleCompanyCreated = (company: Company) => {
-    console.log('Company created:', company)
-    if (activeView === 'list') setRefreshKey((prev) => prev + 1)
-    else setTimeout(() => { setActiveView('list'); setRefreshKey((prev) => prev + 1) }, 2000)
-  }
-
   const handleGuardCreated = (guard: Guard) => {
     console.log('Guard created:', guard)
     if (activeView === 'list') setRefreshKey((prev) => prev + 1)
@@ -54,13 +46,12 @@ export default function AdminRoute() {
 
   const handleRefreshNeeded = () => setRefreshKey((prev) => prev + 1)
 
-  const entityLabel =
-    activeTab === 'users' ? 'User' : activeTab === 'companies' ? 'Company' : 'Guard'
+  const entityLabel = activeTab === 'users' ? 'User' : 'Guard'
 
   return (
     <PageLayout
       title="Admin management"
-      description="Users, companies, guards, and scheduled guest approvals."
+      description="Users, guards, and scheduled guest approvals."
       actions={
         activeTab !== 'scheduled' ? (
           <ViewToggle
@@ -75,14 +66,10 @@ export default function AdminRoute() {
         ) : undefined
       }
     >
-      <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <button type="button" onClick={() => setActiveTab('users')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'users' ? TAB_ACTIVE : TAB_IDLE}`}>
           <UserIcon className="h-5 w-5 shrink-0" aria-hidden />
           Users
-        </button>
-        <button type="button" onClick={() => setActiveTab('companies')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'companies' ? TAB_ACTIVE : TAB_IDLE}`}>
-          <BuildingOfficeIcon className="h-5 w-5 shrink-0" aria-hidden />
-          Companies
         </button>
         <button type="button" onClick={() => setActiveTab('guards')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'guards' ? TAB_ACTIVE : TAB_IDLE}`}>
           <LockClosedIcon className="h-5 w-5 shrink-0" aria-hidden />
@@ -109,14 +96,6 @@ export default function AdminRoute() {
               <AdminUserForm onSuccess={handleUserCreated} onError={(e) => console.error(e)} />
             )}
             {activeView === 'list' && <AdminUserList key={refreshKey} onRefresh={handleRefreshNeeded} />}
-          </>
-        )}
-        {activeTab === 'companies' && (
-          <>
-            {activeView === 'create' && (
-              <CompanyForm onSuccess={handleCompanyCreated} onError={(e) => console.error(e)} />
-            )}
-            {activeView === 'list' && <CompanyList key={refreshKey} onRefresh={handleRefreshNeeded} />}
           </>
         )}
         {activeTab === 'guards' && (

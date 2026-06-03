@@ -122,9 +122,10 @@ export const createDepartmentCategory = async (
   category: Partial<DepartmentCategory>
 ): Promise<CreateCategoryResponse> => {
   try {
-    // Convert to backend DTO format (uppercase property names)
-    const dto: CreateDeptCategoryDto = {
-      Idpk: 0, // Auto-increment - always set to 0
+    // Backend rejects Idpk=0 with "already exists" (the row with id=0 is the
+    // seeded placeholder). Omit Idpk so the database's identity column
+    // assigns the next free value.
+    const body = {
       CategoryName: category.categoryName || '',
       CategoryStatus: category.categoryStatus ?? true,
       CategoryCreatedBy: category.categoryCreatedBy || 'System',
@@ -136,7 +137,7 @@ export const createDepartmentCategory = async (
         'accept': '*/*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(dto),
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {

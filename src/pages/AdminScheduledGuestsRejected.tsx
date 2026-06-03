@@ -19,7 +19,15 @@ function formatVisitTime12h(raw: string | null | undefined): string {
   return `${h}:${mins} ${period}`
 }
 
-export default function AdminScheduledGuestsRejected(): React.JSX.Element {
+interface Props {
+  dateFrom?: string
+  dateTo?: string
+}
+
+export default function AdminScheduledGuestsRejected({
+  dateFrom,
+  dateTo,
+}: Props = {}): React.JSX.Element {
   const [rejected, setRejected] = useState<GuestFacultyVisit[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -65,13 +73,25 @@ export default function AdminScheduledGuestsRejected(): React.JSX.Element {
     void load()
   }, [])
 
+  const visible = rejected.filter((req) => {
+    const ymd = (req.visitDate || '').substring(0, 10)
+    if (dateFrom && ymd < dateFrom) return false
+    if (dateTo && ymd > dateTo) return false
+    return true
+  })
+
   if (loading) return <div className="text-neutral-600">Loading rejected visits...</div>
   if (errorMessage) return <div className="text-sm text-red-700">{errorMessage}</div>
-  if (rejected.length === 0) return <div className="text-neutral-500">No rejected visits</div>
+  if (visible.length === 0)
+    return (
+      <div className="text-neutral-500">
+        {rejected.length === 0 ? 'No rejected visits' : 'No rejected visits in the selected date range'}
+      </div>
+    )
 
   return (
     <div className="space-y-3">
-      {rejected.map((req) => (
+      {visible.map((req) => (
         <div
           key={req.id}
           className="flex items-start justify-between rounded-xl border border-red-200 bg-neutral-50 px-4 py-3"

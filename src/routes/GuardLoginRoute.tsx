@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { ShieldCheckIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { useNavigate } from 'react-router-dom'
-import { getAllGuards } from '../services/guardsApi'
+import { loginAdminUser } from '../services/adminApi'
+import type { ApiError } from '../services/adminApi'
 
 export default function GuardLoginRoute(): React.JSX.Element {
   const [username, setUsername] = useState('')
@@ -16,74 +17,42 @@ export default function GuardLoginRoute(): React.JSX.Element {
     setIsLoading(true)
 
     try {
-      // Get all guards and find matching username
-      let guards
-      try {
-        guards = await getAllGuards()
-      } catch (apiError: any) {
-        // If API is not available (404), provide helpful error
-        if (apiError.status === 404 || apiError.status === 0) {
-          setError('Guard API not available. Please ensure backend is running and Guards table exists.')
-          return
-        }
-        throw apiError // Re-throw other errors
-      }
+      const result = await loginAdminUser({
+        username: username.trim(),
+        password: password.trim(),
+      })
 
-      if (!guards || guards.length === 0) {
-        setError('No guards found in system. Please create guard accounts first.')
+      if (!result.success || !result.user) {
+        setError(result.message || 'Invalid username or password')
         return
       }
 
-      const guard = guards.find(
-        (g) => g.username.toLowerCase() === username.toLowerCase() && g.guardStatus && !g.guardIsDisabled
-      )
-
-      if (guard) {
-        // Verify password (if guardPassword is available and not empty)
-        // Note: In production, this should be done on the backend with proper password hashing
-        // For now, we check if password is provided and matches stored password (if available)
-        if (!password.trim()) {
-          setError('Please enter password')
-          return
-        }
-
-        // TODO: Implement proper backend authentication API that handles password hashing
-        // For now, if guardPassword is available, compare it (assuming plaintext for development)
-        // In production, passwords should be hashed and compared on the backend
-        if (guard.guardPassword && guard.guardPassword.trim() !== '') {
-          // Compare passwords (assuming plaintext for now - should be hashed in production)
-          if (guard.guardPassword !== password.trim()) {
-            setError('Invalid username or password. Please check your credentials.')
-            return
-          }
-        }
-        // If no password stored, accept any password for development (NOT for production!)
-        // TODO: Remove this fallback once backend authentication is implemented
-
-        // Store guard session
-        localStorage.setItem('guardUser', JSON.stringify({
-          id: guard.id,
-          username: guard.username,
-          guardFullName: guard.guardFullName,
-          guardEmail: guard.guardEmail,
-          loggedIn: true,
-          loginTime: new Date().toISOString()
-        }))
-        // Navigate immediately without waiting
-        navigate('/guard/dashboard', { replace: true })
-        return // Exit early after successful navigation
-      } else {
-        setError('Invalid username or password. Please check your credentials.')
+      // The same Admin/Login endpoint serves all roles; only Guards may enter
+      // the guard portal. Anything else is rejected as unauthorized.
+      if ((result.user.role ?? '').trim().toLowerCase() !== 'guard') {
+        setError('Unauthorized: this account is not a guard.')
+        return
       }
+
+      localStorage.setItem(
+        'guardUser',
+        JSON.stringify({
+          id: result.user.id,
+          username: result.user.username,
+          guardFullName: result.user.fullName,
+          guardEmail: result.user.email,
+          role: result.user.role,
+          companyId: result.user.companyId,
+          locationId: result.user.locationId,
+          loggedIn: true,
+          loginTime: new Date().toISOString(),
+        }),
+      )
+      navigate('/guard/dashboard', { replace: true })
     } catch (err) {
       console.error('Login error:', err)
-      const apiError = err as any
-      // Provide more specific error message
-      if (apiError.status === 404) {
-        setError('Guard API not available. Please ensure backend is running and Guards table exists.')
-      } else {
-        setError(apiError.message || 'Login failed. Please try again.')
-      }
+      const apiErr = err as ApiError
+      setError(apiErr?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

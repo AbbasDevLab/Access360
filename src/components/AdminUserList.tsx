@@ -27,10 +27,15 @@ export default function AdminUserList({
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null)
 
   // Both tabs (Users / Guards) read from the same /Admin/GetAdminUsers endpoint
-  // and filter client-side by roleType; case-insensitive to tolerate "Admin",
-  // "admin", " Admin " etc. from the API.
+  // and filter client-side by role. The backend returns the value under
+  // `roleTypes` (plural) on list responses but accepts `roleType` (singular)
+  // on create — check both so neither field-name drift breaks the filter.
+  // Case-insensitive to tolerate "Admin", "admin", " Admin " etc.
   const filteredUsers = roleType
-    ? users.filter((u) => (u.roleType ?? '').trim().toLowerCase() === roleType.trim().toLowerCase())
+    ? users.filter((u) => {
+        const role = (u.roleTypes ?? u.roleType ?? '').trim().toLowerCase()
+        return role === roleType.trim().toLowerCase()
+      })
     : users
 
   const entityLabel =

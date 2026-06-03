@@ -42,7 +42,7 @@ export default function AdminRoute() {
   return (
     <PageLayout
       title="Admin management"
-      description="Users, guards, and scheduled guest approvals."
+      description="Admin users, guards, and scheduled guest approvals."
       actions={
         activeTab !== 'scheduled' ? (
           <ViewToggle
@@ -60,7 +60,7 @@ export default function AdminRoute() {
       <div className="mb-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <button type="button" onClick={() => setActiveTab('users')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'users' ? TAB_ACTIVE : TAB_IDLE}`}>
           <UserIcon className="h-5 w-5 shrink-0" aria-hidden />
-          Users
+          Admin
         </button>
         <button type="button" onClick={() => setActiveTab('guards')} className={`flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${activeTab === 'guards' ? TAB_ACTIVE : TAB_IDLE}`}>
           <LockClosedIcon className="h-5 w-5 shrink-0" aria-hidden />

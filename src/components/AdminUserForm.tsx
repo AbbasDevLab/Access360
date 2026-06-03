@@ -318,7 +318,13 @@ export default function AdminUserForm({
         <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircleIcon className="w-5 h-5 text-green-600" />
           <span className="text-sm text-green-700">
-            <span>{t('adminUserCreatedSuccess')}</span> / <span className="font-urdu text-base" dir="rtl">{t('adminUserCreatedSuccess', { lng: 'ur' })}</span>
+            {roleType === 'Guard' ? (
+              <span>Guard created successfully!</span>
+            ) : (
+              <>
+                <span>{t('adminUserCreatedSuccess')}</span> / <span className="font-urdu text-base" dir="rtl">{t('adminUserCreatedSuccess', { lng: 'ur' })}</span>
+              </>
+            )}
           </span>
         </div>
       )}
@@ -336,6 +342,8 @@ export default function AdminUserForm({
             </svg>
             {t('creating')} / <span className="font-urdu text-base" dir="rtl">{t('creating', { lng: 'ur' })}</span>
           </>
+        ) : roleType === 'Guard' ? (
+          <>Create Guard</>
         ) : (
           <>
             {t('createAdminUser')} / <span className="font-urdu text-base" dir="rtl">{t('createAdminUser', { lng: 'ur' })}</span>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { getAllScheduledGuests, approveScheduledGuest, rejectScheduledGuest, type ScheduledGuest } from '../services/scheduledGuestsApi'
-import { formatPktDateTime } from '../utils/pktTime'
+import { formatPktDateTime, getPktTodayYmd, toPktYmd } from '../utils/pktTime'
 import AdminScheduledGuestsPending from '../pages/AdminScheduledGuestsPending'
 import AdminScheduledGuestsApproved from '../pages/AdminScheduledGuestsApproved'
 import AdminScheduledGuestsRejected from '../pages/AdminScheduledGuestsRejected'
@@ -20,6 +20,15 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
   const [rejectReason, setRejectReason] = useState<{ [key: number]: string }>({})
   const [showRejectModal, setShowRejectModal] = useState<number | null>(null)
   const [statusTab, setStatusTab] = useState<StatusTab>('pending')
+  // Default range = yesterday → today in PKT. Operators usually only care
+  // about the immediate window of arrivals; they can widen the range as
+  // needed with the date inputs.
+  const [dateFrom, setDateFrom] = useState(() => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    return toPktYmd(yesterday)
+  })
+  const [dateTo, setDateTo] = useState(() => getPktTodayYmd())
 
   useEffect(() => {
     loadScheduledGuests()
@@ -119,12 +128,51 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
           </div>
         </div>
 
+        <div className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+          <div className="flex flex-col">
+            <label htmlFor="sg-date-from" className="text-xs font-semibold text-neutral-700">
+              Visit date from
+            </label>
+            <input
+              id="sg-date-from"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="mt-1 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900 focus:border-[#00A651] focus:outline-none focus:ring-2 focus:ring-[#00A651]/25"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="sg-date-to" className="text-xs font-semibold text-neutral-700">
+              Visit date to
+            </label>
+            <input
+              id="sg-date-to"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="mt-1 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm text-neutral-900 focus:border-[#00A651] focus:outline-none focus:ring-2 focus:ring-[#00A651]/25"
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setDateFrom('')
+                setDateTo('')
+              }}
+              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-100"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
+
         {statusTab === 'pending' && (
           <>
             {/* Pending Faculty Visit Requests (from new API) */}
             <section>
               <h3 className="text-lg font-semibold text-neutral-800 mb-3">Faculty visit requests</h3>
-              <AdminScheduledGuestsPending />
+              <AdminScheduledGuestsPending dateFrom={dateFrom} dateTo={dateTo} />
             </section>
 
             {/* Existing Pending Scheduled Guests */}
@@ -217,7 +265,7 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
         {statusTab === 'approved' && (
           <section>
             <h3 className="text-lg font-semibold text-neutral-800 mb-3">Approved faculty visit requests</h3>
-            <AdminScheduledGuestsApproved />
+            <AdminScheduledGuestsApproved dateFrom={dateFrom} dateTo={dateTo} />
           </section>
         )}
 
@@ -225,7 +273,7 @@ export default function ScheduledGuestsApproval(): React.JSX.Element {
           <div className="space-y-6">
             <section>
               <h3 className="text-lg font-semibold text-neutral-800 mb-3">Rejected faculty visit requests</h3>
-              <AdminScheduledGuestsRejected />
+              <AdminScheduledGuestsRejected dateFrom={dateFrom} dateTo={dateTo} />
             </section>
 
             <section>

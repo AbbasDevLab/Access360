@@ -4,33 +4,56 @@ import { Navigate, useLocation } from 'react-router-dom'
 interface ProtectedRouteProps {
   children: React.ReactNode
   requiresAuth?: boolean
+  /** If provided, the logged-in user's role must match (case-insensitive).
+   *  A mismatched role is bounced — Guards go to their own portal, anyone
+   *  else gets sent back to login. */
+  requiredRole?: string
 }
 
-export default function ProtectedRoute({ children, requiresAuth = true }: ProtectedRouteProps): React.JSX.Element {
+interface StoredAdminUser {
+  loggedIn?: boolean
+  role?: string
+}
+
+export default function ProtectedRoute({
+  children,
+  requiresAuth = true,
+  requiredRole,
+}: ProtectedRouteProps): React.JSX.Element {
   const location = useLocation()
-  
-  // Check authentication synchronously - no loading state needed
-  const isAuthenticated = useMemo(() => {
+
+  const { isAuthenticated, role } = useMemo(() => {
     if (!requiresAuth) {
-      return true
+      return { isAuthenticated: true, role: undefined as string | undefined }
     }
-    
     const stored = localStorage.getItem('adminUser')
-    if (!stored) {
-      return false
-    }
-    
+    if (!stored) return { isAuthenticated: false, role: undefined }
     try {
-      const user = JSON.parse(stored)
-      return user.loggedIn === true
-    } catch (e) {
-      return false
+      const user = JSON.parse(stored) as StoredAdminUser
+      return {
+        isAuthenticated: user.loggedIn === true,
+        role: typeof user.role === 'string' ? user.role : undefined,
+      }
+    } catch {
+      return { isAuthenticated: false, role: undefined }
     }
-  }, [requiresAuth, location.pathname]) // Re-check when pathname changes
+  }, [requiresAuth, location.pathname])
 
   if (requiresAuth && !isAuthenticated) {
-    // Redirect to login with return URL
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (
+    requiredRole &&
+    (role ?? '').trim().toLowerCase() !== requiredRole.trim().toLowerCase()
+  ) {
+    // Logged in but wrong role for this page. If they're a Guard, send them
+    // to the guard portal where they belong; otherwise back to login.
+    const target =
+      (role ?? '').trim().toLowerCase() === 'guard'
+        ? '/guard/dashboard'
+        : '/login'
+    return <Navigate to={target} replace />
   }
 
   return <>{children}</>

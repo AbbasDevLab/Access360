@@ -23,7 +23,17 @@ const getCurrentAdminId = (): number | null => {
   }
 }
 
-export default function AdminScheduledGuestsPending(): React.JSX.Element {
+interface Props {
+  /** Inclusive lower bound, yyyy-mm-dd. Empty/undefined → no lower bound. */
+  dateFrom?: string
+  /** Inclusive upper bound, yyyy-mm-dd. Empty/undefined → no upper bound. */
+  dateTo?: string
+}
+
+export default function AdminScheduledGuestsPending({
+  dateFrom,
+  dateTo,
+}: Props = {}): React.JSX.Element {
   const [pending, setPending] = useState<GuestFacultyVisit[]>([])
   const [loading, setLoading] = useState(true)
   const [rejectingId, setRejectingId] = useState<number | null>(null)
@@ -77,12 +87,24 @@ export default function AdminScheduledGuestsPending(): React.JSX.Element {
     }
   }
 
+  const visible = pending.filter((req) => {
+    const ymd = (req.visitDate || '').substring(0, 10)
+    if (dateFrom && ymd < dateFrom) return false
+    if (dateTo && ymd > dateTo) return false
+    return true
+  })
+
   if (loading) return <div className="text-neutral-600">Loading pending requests...</div>
-  if (pending.length === 0) return <div className="text-neutral-500">No pending requests</div>
+  if (visible.length === 0)
+    return (
+      <div className="text-neutral-500">
+        {pending.length === 0 ? 'No pending requests' : 'No pending requests in the selected date range'}
+      </div>
+    )
 
   return (
     <div className="space-y-3">
-      {pending.map((req) => (
+      {visible.map((req) => (
         <div
           key={req.id}
           className="flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3"

@@ -40,7 +40,7 @@ const router = createBrowserRouter([
     element: <RouterRoot />,
     children: [
       { index: true, element: <HomeRoute /> },
-      { path: 'dashboard', element: <ProtectedRoute><AdminDashboardRoute /></ProtectedRoute> },
+      { path: 'dashboard', element: <ProtectedRoute requiredRole="Admin"><AdminDashboardRoute /></ProtectedRoute> },
       { path: 'counter/check-in', element: <ProtectedRoute><AdminCheckInRoute /></ProtectedRoute> },
       { path: 'counter/check-out', element: <ProtectedRoute><AdminCheckOutRoute /></ProtectedRoute> },
       { path: 'enroll', element: <ProtectedRoute><EnrollRoute /></ProtectedRoute> },

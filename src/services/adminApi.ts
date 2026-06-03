@@ -22,7 +22,11 @@ export interface AdminUser {
   userCreatedAt?: string | null
   userUpdatedBy?: string | null
   userUpdatedAt?: string | null
+  /** The create payload sends `roleType` (singular). The GET response from
+   *  the backend returns the same value under `roleTypes` (plural). Keep
+   *  both on the type so consumers don't have to care which name shows up. */
   roleType?: string | null
+  roleTypes?: string | null
   company?: any
   location?: any
 }

@@ -13,6 +13,7 @@ import { formatPakMobileInput, isValidPakMobile, PAK_MOBILE_MAX_INPUT_LENGTH } f
 import CameraCapture from './CameraCapture'
 import SearchableSelect from './SearchableSelect'
 import { compressImageDataUrl } from '../utils/imageCompress'
+import { saveCnicImages, requestPersistentStorage } from '../utils/cnicImageStore'
 
 interface GuardCheckInProps {
   onBack: () => void
@@ -369,20 +370,18 @@ export default function GuardCheckIn({
 
       // Always cache the photos locally keyed by visit id so the report's
       // "View CNIC" works on this device, even if the backend dropped them.
+      // Uses IndexedDB (much higher quota than localStorage, which fills up
+      // after ~30–50 check-ins worth of base64 images).
       const newVisitId =
         createdVisit?.idpk ?? createdVisit?.id ?? createdVisit?.Idpk ?? null
       if (newVisitId != null && (cnicFrontImage || cnicBackImage)) {
-        try {
-          localStorage.setItem(
-            `access360.cnicImages.${newVisitId}`,
-            JSON.stringify({
-              front: cnicFrontImage || null,
-              back: cnicBackImage || null,
-            }),
-          )
-        } catch {
-          // localStorage quota or disabled — non-fatal
-        }
+        void saveCnicImages(newVisitId, {
+          front: cnicFrontImage || null,
+          back: cnicBackImage || null,
+        })
+        // First write also triggers the persistent-storage prompt so the
+        // browser is less likely to evict us under disk pressure.
+        void requestPersistentStorage()
       }
 
       setSubmitStatus('success')

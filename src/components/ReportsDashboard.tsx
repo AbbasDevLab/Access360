@@ -13,6 +13,12 @@ import {
 import { getAllGuestVisits, getActiveGuestVisits, type GuestVisit } from '../services/guestVisitApi'
 import { PageLayout } from './layout/PageLayout'
 import {
+  loadAllCnicImages,
+  migrateLegacyLocalStorage,
+  requestPersistentStorage,
+  type CnicImagePair,
+} from '../utils/cnicImageStore'
+import {
   formatPktTime,
   getPktHour24,
   getPktTodayYmd,
@@ -98,7 +104,10 @@ function reportVisitRowStatus(visit: GuestVisit): ReportData['status'] {
   return visit.isRFIDCardReturned === false ? 'lost_card' : 'completed'
 }
 
-function convertVisitToReportData(visit: GuestVisit): ReportData {
+function convertVisitToReportData(
+  visit: GuestVisit,
+  localCnic: Map<string, CnicImagePair>,
+): ReportData {
   const entryTime = visit.timeIn ? formatPktTime(visit.timeIn) : 'N/A'
   const exitTime = visit.timeOut ? formatPktTime(visit.timeOut) : undefined
 
@@ -116,19 +125,15 @@ function convertVisitToReportData(visit: GuestVisit): ReportData {
   let cnicImages = parseCnicImagePath(visit.imagePath)
   // Fallback: this device may have a local copy of the CNIC photos from when
   // the visit was created (used when the backend's ImagePath column was too
-  // small to hold the embedded base64).
+  // small to hold the embedded base64). Loaded from IndexedDB into the
+  // `localCnic` map by the parent component before this function runs.
   if (!cnicImages.front && !cnicImages.back) {
-    try {
-      const local = localStorage.getItem(`access360.cnicImages.${visit.idpk}`)
-      if (local) {
-        const parsed = JSON.parse(local) as { front?: unknown; back?: unknown }
-        cnicImages = {
-          front: typeof parsed.front === 'string' ? parsed.front : undefined,
-          back: typeof parsed.back === 'string' ? parsed.back : undefined,
-        }
+    const local = localCnic.get(String(visit.idpk))
+    if (local) {
+      cnicImages = {
+        front: typeof local.front === 'string' ? local.front : undefined,
+        back: typeof local.back === 'string' ? local.back : undefined,
       }
-    } catch {
-      // ignore
     }
   }
 
@@ -159,11 +164,39 @@ export default function ReportsDashboard(): React.JSX.Element {
   })
   const [cnicViewerRecord, setCnicViewerRecord] = useState<ReportData | null>(null)
   const [allVisits, setAllVisits] = useState<GuestVisit[]>([])
+  const [localCnic, setLocalCnic] = useState<Map<string, CnicImagePair>>(() => new Map())
   /** Same payload as live rows; merged into `allVisits` for stats when the list endpoint omits open visits. */
   const [activeGuestVisits, setActiveGuestVisits] = useState<GuestVisit[]>([])
-  const [liveRecords, setLiveRecords] = useState<ReportData[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Live rows are derived from the active visits + the local CNIC cache.
+  // Using useMemo so changes to either input (e.g. the IDB cache finishing
+  // its initial load after the API call already returned) re-derive the
+  // rows and the "View CNIC" affordance lights up on visits whose photos
+  // we have locally.
+  const liveRecords = useMemo<ReportData[]>(
+    () => activeGuestVisits.map((v) => convertVisitToReportData(v, localCnic)),
+    [activeGuestVisits, localCnic],
+  )
+
+  // Hydrate the local CNIC image cache from IndexedDB (and any legacy
+  // localStorage entries) once on mount. This is the source the rows fall
+  // back to when the backend's ImagePath column didn't store the photos.
+  useEffect(() => {
+    let cancelled = false
+    void requestPersistentStorage()
+    void migrateLegacyLocalStorage().then(() => {
+      if (cancelled) return
+      void loadAllCnicImages().then((map) => {
+        if (cancelled) return
+        setLocalCnic(map)
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const refreshFromApi = async () => {
     setLoadError(null)
@@ -174,7 +207,6 @@ export default function ReportsDashboard(): React.JSX.Element {
       ])
       setAllVisits(all)
       setActiveGuestVisits(active)
-      setLiveRecords(active.map(convertVisitToReportData))
     } catch (error) {
       console.error('Error loading reports data:', error)
       const msg =
@@ -198,7 +230,6 @@ export default function ReportsDashboard(): React.JSX.Element {
         if (cancelled) return
         setAllVisits(all)
         setActiveGuestVisits(active)
-        setLiveRecords(active.map(convertVisitToReportData))
       } catch (error) {
         console.error('Error loading reports data:', error)
         if (!cancelled) {
@@ -239,8 +270,8 @@ export default function ReportsDashboard(): React.JSX.Element {
       const ymd = toPktYmd(visit.timeIn)
       return ymd >= dateRange.start && ymd <= dateRange.end
     })
-    return filtered.map(convertVisitToReportData)
-  }, [mergedVisits, dateRange.start, dateRange.end])
+    return filtered.map((v) => convertVisitToReportData(v, localCnic))
+  }, [mergedVisits, dateRange.start, dateRange.end, localCnic])
 
   const todayVisitsCount = useMemo(() => {
     const now = new Date()
@@ -305,8 +336,8 @@ export default function ReportsDashboard(): React.JSX.Element {
     const now = new Date()
     return mergedVisits
       .filter((v) => v.timeIn && isSamePktMonth(v.timeIn, now))
-      .map(convertVisitToReportData)
-  }, [mergedVisits])
+      .map((v) => convertVisitToReportData(v, localCnic))
+  }, [mergedVisits, localCnic])
 
   const longestOpenStayMinutes = useMemo(() => {
     if (liveRecords.length === 0) return null

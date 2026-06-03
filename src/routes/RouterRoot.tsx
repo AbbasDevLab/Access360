@@ -217,7 +217,7 @@ export default function RouterRoot(): React.JSX.Element {
           </div>
         )}
 
-        <div className="border-t border-neutral-200 p-4">
+        {/* <div className="border-t border-neutral-200 p-4">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-neutral-500">
             <LanguageIcon className="h-4 w-4" aria-hidden />
             Language
@@ -246,7 +246,7 @@ export default function RouterRoot(): React.JSX.Element {
               اردو
             </button>
           </div>
-        </div>
+        </div> */}
       </aside>
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#e8eaed]">
